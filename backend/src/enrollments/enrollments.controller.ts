@@ -33,13 +33,13 @@ interface AuthRequest extends ExpressRequest {
 export class EnrollmentsController {
   constructor(private readonly enrollmentsService: EnrollmentsService) {}
 
-  @Roles(Role.STUDENT)
+  @Roles(Role.STUDENT, Role.ADMIN)
   @Post()
   create(
     @Request() req: AuthRequest,
     @Body() createEnrollmentDto: CreateEnrollmentDto,
   ) {
-    return this.enrollmentsService.create(req.user.id, createEnrollmentDto);
+    return this.enrollmentsService.create(req.user.id, createEnrollmentDto, req.user.role);
   }
 
   @Roles(Role.STUDENT)

@@ -12,8 +12,7 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
   const { pathname } = request.nextUrl;
 
-  const isAuthPage =
-    pathname.startsWith('/login') || pathname.startsWith('/register');
+  const isAuthPage = pathname.startsWith('/login');
 
   if (!token) {
     if (!isAuthPage && pathname.startsWith('/dashboard')) {
@@ -62,5 +61,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login', '/register'],
+  matcher: ['/dashboard/:path*', '/login'],
 };

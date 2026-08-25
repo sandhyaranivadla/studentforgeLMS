@@ -11,6 +11,10 @@ export class CreateEnrollmentDto {
   @IsString()
   @IsNotEmpty()
   courseId!: string;
+
+  @IsString()
+  @IsOptional()
+  studentId?: string;
 }
 
 export class UpdateEnrollmentDto {

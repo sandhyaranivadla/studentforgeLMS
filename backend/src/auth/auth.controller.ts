@@ -22,6 +22,8 @@ interface AuthRequest extends Request {
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @Post('register')
   register(@Body() body: RegisterDto) {
     return this.authService.register(

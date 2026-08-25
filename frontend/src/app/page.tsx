@@ -13,11 +13,8 @@ export default function Home() {
             <span className="text-xl font-bold text-white tracking-tight">StudentForge</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm font-medium text-neutral-300 hover:text-white transition-colors">
-              Sign In
-            </Link>
-            <Link href="/register" className="text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all shadow-[0_0_20px_rgba(37,99,235,0.2)]">
-              Get Started
+            <Link href="/login" className="text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all shadow-[0_0_20px_rgba(37,99,235,0.2)]">
+              Login
             </Link>
           </div>
         </div>
@@ -31,23 +28,23 @@ export default function Home() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
             </span>
-            Real-time Learning Management System
+            Exclusive Learning Management System
           </div>
           
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight max-w-4xl mx-auto leading-tight">
-            Learn at your own pace. <br className="hidden md:block" />
+            An exclusive portal for <br className="hidden md:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">
-              Master it in real-time.
+              dedicated cohorts.
             </span>
           </h1>
           
           <p className="text-lg md:text-xl text-neutral-400 max-w-2xl mx-auto leading-relaxed">
-            StudentForge seamlessly blends asynchronous self-paced courses with interactive, synchronous live classrooms. Discover, enroll, and earn your credentials all in one place.
+            Welcome to StudentForge. Access your premium enrolled courses, join live instructor-led sessions, and collaborate with your cohort.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Link href="/register" className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all shadow-[0_0_30px_rgba(37,99,235,0.3)] hover:scale-105">
-              Start Learning Today
+            <Link href="/login" className="w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl text-lg font-semibold transition-all shadow-[0_0_30px_rgba(37,99,235,0.3)] hover:scale-105">
+              Login
               <ArrowRight size={20} />
             </Link>
           </div>

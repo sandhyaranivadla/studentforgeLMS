@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { CoursesModule } from './courses/courses.module';
 import { EnrollmentsModule } from './enrollments/enrollments.module';
 import { ProgressModule } from './progress/progress.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ProgressModule } from './progress/progress.module';
     CoursesModule,
     EnrollmentsModule,
     ProgressModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

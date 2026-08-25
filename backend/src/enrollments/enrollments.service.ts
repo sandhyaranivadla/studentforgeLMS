@@ -22,7 +22,9 @@ export class EnrollmentsService {
     return { enrolled: !!enrollment, enrollment: enrollment ?? null };
   }
 
-  async create(studentId: string, createEnrollmentDto: CreateEnrollmentDto) {
+  async create(userId: string, createEnrollmentDto: CreateEnrollmentDto, userRole?: Role) {
+    const studentId = (userRole === Role.ADMIN && createEnrollmentDto.studentId) ? createEnrollmentDto.studentId : userId;
+
     // Prevent duplicate enrollment
     const existing = await this.prisma.enrollment.findFirst({
       where: {
@@ -32,7 +34,7 @@ export class EnrollmentsService {
     });
 
     if (existing) {
-      throw new ConflictException('You are already enrolled in this course');
+      throw new ConflictException('Already enrolled in this course');
     }
 
     // Check if course exists and is published
@@ -44,7 +46,7 @@ export class EnrollmentsService {
       throw new NotFoundException('Course not found');
     }
 
-    if (!course.published) {
+    if (!course.published && userRole !== Role.ADMIN) {
       throw new ForbiddenException('Cannot enroll in an unpublished course');
     }
 

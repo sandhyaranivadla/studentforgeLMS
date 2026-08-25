@@ -153,12 +153,6 @@ export default function StudentDashboard() {
       <div className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold text-white">My Courses</h2>
-          <Link
-            href="/courses"
-            className="text-sm text-blue-500 hover:text-blue-400 transition-colors"
-          >
-            Browse more →
-          </Link>
         </div>
 
         {/* Loading skeleton */}
@@ -193,14 +187,11 @@ export default function StudentDashboard() {
           <div className="text-center py-12 bg-neutral-950 rounded-xl border border-neutral-800 border-dashed">
             <BookMarked className="h-10 w-10 text-neutral-600 mx-auto mb-3" />
             <p className="text-neutral-500 mb-4">
-              You haven&apos;t enrolled in any courses yet.
+              You haven&apos;t been enrolled in any courses yet.
             </p>
-            <Link
-              href="/courses"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-medium text-sm transition-colors"
-            >
-              Explore Catalog
-            </Link>
+            <p className="text-neutral-600 text-sm">
+              Please contact your administrator to get access.
+            </p>
           </div>
         )}
 

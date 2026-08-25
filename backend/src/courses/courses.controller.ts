@@ -50,7 +50,7 @@ export class CoursesController {
     @Request() req: AuthRequest,
     @Body() createCourseDto: CreateCourseDto,
   ) {
-    return this.coursesService.createCourse(req.user.id, createCourseDto);
+    return this.coursesService.createCourse(req.user.id, createCourseDto, req.user.role);
   }
 
   @Get()

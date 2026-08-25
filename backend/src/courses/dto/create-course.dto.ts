@@ -22,6 +22,10 @@ export class CreateCourseDto {
   @IsString()
   @IsOptional()
   thumbnail?: string;
+
+  @IsString()
+  @IsOptional()
+  instructorId?: string;
 }
 
 export class UpdateCourseDto {

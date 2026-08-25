@@ -52,13 +52,6 @@ export default function InstructorDashboard() {
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [coursesError, setCoursesError] = useState('');
 
-  /* Create-course form */
-  const [newTitle, setNewTitle] = useState('');
-  const [newDesc, setNewDesc] = useState('');
-  const [newPrice, setNewPrice] = useState('0');
-  const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState('');
-
   /* Expanded course (to show modules/lessons) */
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
 
@@ -107,38 +100,6 @@ export default function InstructorDashboard() {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${token}`,
   });
-
-  /* ── Create course ─────────────────────────────────────── */
-  const handleCreateCourse = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!token) return;
-    setCreating(true);
-    setCreateError('');
-    try {
-      const res = await fetch(`${API}/courses`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          title: newTitle,
-          description: newDesc,
-          price: parseFloat(newPrice) || 0,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setCreateError(Array.isArray(data.message) ? data.message.join(', ') : data.message);
-        return;
-      }
-      setCourses((prev) => [...prev, { ...data, modules: [] }]);
-      setNewTitle('');
-      setNewDesc('');
-      setNewPrice('0');
-    } catch {
-      setCreateError('Unexpected error');
-    } finally {
-      setCreating(false);
-    }
-  };
 
   /* ── Toggle publish ────────────────────────────────────── */
   const handleTogglePublish = async (course: Course) => {
@@ -325,66 +286,9 @@ export default function InstructorDashboard() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-8">
-        {/* Create course form */}
+      <div className="grid md:grid-cols-1 gap-8">
+        {/* Course list */ }
         <div className="md:col-span-1">
-          <div className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <Plus size={18} className="text-blue-500" />
-              New Course
-            </h2>
-            {createError && (
-              <div className="flex items-start gap-2 text-red-400 bg-red-900/20 border border-red-500/30 rounded-lg p-3 text-sm mb-4">
-                <AlertCircle size={15} className="mt-0.5 shrink-0" />
-                {createError}
-              </div>
-            )}
-            <form onSubmit={handleCreateCourse} className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Title *</label>
-                <input
-                  required
-                  className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:border-blue-500"
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="e.g. Full-Stack Next.js"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Description *</label>
-                <textarea
-                  required
-                  rows={3}
-                  className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:border-blue-500 resize-none"
-                  value={newDesc}
-                  onChange={(e) => setNewDesc(e.target.value)}
-                  placeholder="What will students learn?"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-neutral-400 mb-1">Price ($)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:border-blue-500"
-                  value={newPrice}
-                  onChange={(e) => setNewPrice(e.target.value)}
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={creating}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-colors disabled:opacity-50 text-sm"
-              >
-                {creating ? 'Creating…' : 'Create Course'}
-              </button>
-            </form>
-          </div>
-        </div>
-
-        {/* Course list */}
-        <div className="md:col-span-2">
           <div className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6">
             <h2 className="text-lg font-semibold text-white mb-4">Your Courses</h2>
 
@@ -405,7 +309,7 @@ export default function InstructorDashboard() {
 
             {!loadingCourses && !coursesError && courses.length === 0 && (
               <div className="text-center py-10 text-neutral-500 text-sm">
-                No courses yet. Create your first course →
+                No courses assigned yet. Check back later or contact your admin.
               </div>
             )}
 

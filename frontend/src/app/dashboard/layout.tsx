@@ -4,28 +4,9 @@ import { BookOpen, LogOut, LayoutDashboard, Settings } from 'lucide-react';
 import React from 'react';
 import Cookies from 'js-cookie';
 import { jwtDecode } from 'jwt-decode';
+import { useAuth } from '@/contexts/AuthContext';
 
-interface StoredUser {
-  name?: string;
-  email?: string;
-}
 
-interface JwtPayload {
-  name?: string;
-  email: string;
-  role: string;
-}
-
-function getUserFromCookie(): StoredUser | null {
-  const token = Cookies.get('token');
-  if (!token) return null;
-  try {
-    const decoded = jwtDecode<JwtPayload>(token);
-    return { name: decoded.name, email: decoded.email };
-  } catch {
-    return null;
-  }
-}
 
 export default function DashboardLayout({
   children,
@@ -33,7 +14,16 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const user = getUserFromCookie();
+  const { user, logout } = useAuth();
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return null; // Return null on first render to prevent SSR hydration mismatch
+  }
 
   if (!user) {
     void router.push('/login');
@@ -84,7 +74,7 @@ export default function DashboardLayout({
           </div>
           <button
             onClick={() => {
-              Cookies.remove('token');
+              logout();
               void router.push('/login');
             }}
             className="w-full flex items-center gap-2 text-neutral-400 hover:text-red-400 px-4 py-2 rounded-lg transition-colors"
