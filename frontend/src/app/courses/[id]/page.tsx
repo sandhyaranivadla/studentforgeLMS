@@ -1,183 +1,310 @@
-"use client";
-import { useParams } from 'next/navigation';
-import Link from 'next/link';
-import { BookOpen, Star, Clock, CheckCircle, Video, FileText, ChevronRight, Lock } from 'lucide-react';
+'use client';
 
-export default function CourseDetail() {
-  const params = useParams();
-  
-  // Mock Data
-  const course = {
-    id: params.id as string,
-    title: 'Full-Stack Next.js Masterclass',
-    description: 'Learn to build production-ready, full-stack applications with Next.js 15, React server components, and TailwindCSS from scratch.',
-    instructor: 'Dr. Smith',
-    rating: 4.9,
-    students: '1,240',
-    duration: '12h 30m',
-    price: '$99',
-    thumbnail: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?q=80&w=1200&auto=format&fit=crop',
-    whatYouWillLearn: [
-      'Build full-stack apps with Next.js App Router',
-      'Secure authentication and role-based access',
-      'Database integration with Prisma and CockroachDB',
-      'Deploy scalable apps to Vercel and AWS'
-    ],
-    modules: [
-      {
-        title: 'Module 1: Introduction to Next.js',
-        duration: '1h 20m',
-        lessons: [
-          { title: 'Welcome to the Course', type: 'video', duration: '5m' },
-          { title: 'Setting up the environment', type: 'video', duration: '15m' },
-          { title: 'Understanding Server Components', type: 'video', duration: '45m' },
-          { title: 'Module 1 Quiz', type: 'quiz', duration: '15m' },
-        ]
-      },
-      {
-        title: 'Module 2: Routing and Layouts',
-        duration: '2h 10m',
-        lessons: [
-          { title: 'App Router Deep Dive', type: 'video', duration: '30m' },
-          { title: 'Nested Layouts', type: 'video', duration: '45m' },
-          { title: 'Routing Best Practices', type: 'pdf', duration: '10m' },
-        ]
+import { useEffect, useState, use } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  ArrowLeft,
+  CheckCircle,
+  PlayCircle,
+  FileText,
+  HelpCircle,
+  Lock,
+  AlertCircle,
+  BookOpen,
+} from 'lucide-react';
+
+interface Lesson {
+  id: string;
+  title: string;
+  type: 'VIDEO' | 'PDF' | 'QUIZ';
+  duration: string | null;
+  contentUrl: string | null;
+  orderIndex: number;
+}
+
+interface CourseModule {
+  id: string;
+  title: string;
+  orderIndex: number;
+  lessons: Lesson[];
+}
+
+interface Course {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  thumbnail: string | null;
+  published: boolean;
+  instructor: { name: string | null };
+  modules: CourseModule[];
+}
+
+const lessonIcon = (type: Lesson['type']) => {
+  if (type === 'VIDEO') return <PlayCircle className="h-4 w-4 text-blue-400" />;
+  if (type === 'PDF') return <FileText className="h-4 w-4 text-emerald-400" />;
+  return <HelpCircle className="h-4 w-4 text-yellow-400" />;
+};
+
+export default function CourseDetails({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const { token, user } = useAuth();
+  const router = useRouter();
+
+  const [course, setCourse] = useState<Course | null>(null);
+  const [enrolled, setEnrolled] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [enrollError, setEnrollError] = useState('');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const headers: Record<string, string> = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const courseRes = await fetch(`http://localhost:4000/courses/${id}`, {
+          headers,
+          cache: 'no-store',
+        } as RequestInit);
+
+        if (!courseRes.ok) {
+          if (courseRes.status === 404) setError('Course not found.');
+          else setError(`Failed to load course (${courseRes.status})`);
+          return;
+        }
+
+        const courseData: Course = await courseRes.json();
+        setCourse(courseData);
+
+        // Check enrollment if logged in as student
+        if (token && user?.role === 'STUDENT') {
+          const enrollRes = await fetch(
+            `http://localhost:4000/enrollments/check/${id}`,
+            { headers },
+          );
+          if (enrollRes.ok) {
+            const { enrolled: isEnrolled } = await enrollRes.json();
+            setEnrolled(isEnrolled);
+          }
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to load course');
+      } finally {
+        setLoading(false);
       }
-    ]
+    };
+    void fetchData();
+  }, [id, token, user]);
+
+  const handleEnroll = async () => {
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+    if (user?.role !== 'STUDENT') {
+      setEnrollError('Only students can enroll in courses.');
+      return;
+    }
+    setEnrolling(true);
+    setEnrollError('');
+    try {
+      const res = await fetch('http://localhost:4000/enrollments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ courseId: id }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setEnrolled(true);
+      } else {
+        setEnrollError(data.message || 'Failed to enroll');
+      }
+    } catch {
+      setEnrollError('An unexpected error occurred');
+    } finally {
+      setEnrolling(false);
+    }
   };
 
+  /* ── Loading ── */
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-neutral-400">Loading course…</p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Error ── */
+  if (error || !course) {
+    return (
+      <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto" />
+          <h1 className="text-2xl font-bold">{error || 'Course not found'}</h1>
+          <Link href="/courses" className="text-blue-500 hover:text-blue-400 flex items-center justify-center gap-2">
+            <ArrowLeft size={16} /> Back to catalog
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const totalLessons = course.modules.reduce((sum, m) => sum + m.lessons.length, 0);
+  const isInstructor = user?.role === 'INSTRUCTOR' || user?.role === 'ADMIN';
+
   return (
-    <div className="min-h-screen bg-neutral-950 text-white flex flex-col font-sans selection:bg-blue-500/30">
-      <header className="h-16 border-b border-neutral-800 bg-neutral-950/80 backdrop-blur-md flex items-center px-6 sticky top-0 z-50 justify-between">
-        <Link href="/dashboard" className="flex items-center gap-2 text-blue-500">
-          <BookOpen size={24} />
-          <span className="font-bold text-xl text-white tracking-tight">StudentForge</span>
+    <div className="min-h-screen bg-neutral-950 text-white">
+      {/* Header */}
+      <header className="h-16 border-b border-neutral-800 bg-neutral-950/80 backdrop-blur-md flex items-center px-6 sticky top-0 z-50">
+        <Link href="/courses" className="flex items-center gap-2 text-neutral-400 hover:text-white transition-colors">
+          <ArrowLeft size={18} />
+          <span className="text-sm">Back to catalog</span>
         </Link>
-        <Link href="/courses" className="text-sm font-medium text-neutral-400 hover:text-white transition-colors py-2">
-          &larr; Back to Catalog
-        </Link>
+        <div className="ml-auto flex items-center gap-2 text-blue-500">
+          <BookOpen size={20} />
+          <span className="font-bold text-white">StudentForge</span>
+        </div>
       </header>
 
-      <main className="flex-1">
-        {/* Hero Section */}
-        <div className="bg-neutral-900 border-b border-neutral-800">
-          <div className="max-w-7xl mx-auto px-6 py-12 lg:py-20 flex flex-col lg:flex-row gap-12">
-            <div className="flex-1 space-y-6">
-              <div className="flex items-center gap-2 text-sm font-medium text-blue-400">
-                <Link href="/courses" className="hover:underline">Engineering</Link>
-                <ChevronRight className="h-4 w-4 text-neutral-600" />
-                <span className="text-neutral-400">Web Development</span>
-              </div>
-              <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
-                {course.title}
-              </h1>
-              <p className="text-lg text-neutral-400 max-w-2xl leading-relaxed">
-                {course.description}
+      <div className="max-w-5xl mx-auto p-6 lg:p-12">
+        {/* Hero */}
+        <div className="grid lg:grid-cols-3 gap-8 mb-12">
+          <div className="lg:col-span-2">
+            <h1 className="text-3xl lg:text-4xl font-extrabold mb-4 leading-tight">{course.title}</h1>
+            <p className="text-neutral-300 text-lg leading-relaxed mb-6">{course.description}</p>
+            <div className="flex flex-wrap gap-4 text-sm text-neutral-400">
+              <span>By <strong className="text-white">{course.instructor?.name || 'Unknown'}</strong></span>
+              <span>•</span>
+              <span>{course.modules.length} module{course.modules.length !== 1 ? 's' : ''}</span>
+              <span>•</span>
+              <span>{totalLessons} lesson{totalLessons !== 1 ? 's' : ''}</span>
+            </div>
+          </div>
+
+          {/* Enroll card */}
+          <div className="bg-neutral-900 border border-neutral-800 rounded-2xl p-6 flex flex-col gap-4 h-fit">
+            {course.thumbnail && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={course.thumbnail}
+                alt={course.title}
+                className="w-full h-36 object-cover rounded-xl"
+              />
+            )}
+            <div className="text-2xl font-bold">
+              {course.price === 0 ? (
+                <span className="text-emerald-400">Free</span>
+              ) : (
+                <span>${course.price}</span>
+              )}
+            </div>
+
+            {enrollError && (
+              <p className="text-red-400 text-sm bg-red-900/30 border border-red-500/30 rounded p-2">
+                {enrollError}
               </p>
-              
-              <div className="flex flex-wrap items-center gap-6 text-sm text-neutral-300">
-                <span className="flex items-center gap-1.5 bg-yellow-500/10 text-yellow-500 px-3 py-1 rounded-full font-medium">
-                  <Star className="h-4 w-4 fill-yellow-500" /> {course.rating} Rating
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <BookOpen className="h-4 w-4 text-neutral-500" /> {course.students} students
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <Clock className="h-4 w-4 text-neutral-500" /> {course.duration} of content
-                </span>
+            )}
+
+            {/* Enrolled student */}
+            {enrolled && user?.role === 'STUDENT' && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-emerald-400 text-sm font-medium">
+                  <CheckCircle size={16} /> You are enrolled
+                </div>
+                <Link
+                  href={`/learn/${course.id}`}
+                  className="block text-center w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-colors"
+                >
+                  Continue Learning
+                </Link>
               </div>
-              
-              <div className="pt-4 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white shadow-inner">
-                  {course.instructor.charAt(0)}
-                </div>
-                <div>
-                  <p className="text-sm text-neutral-400">Instructed by</p>
-                  <p className="font-medium text-white">{course.instructor}</p>
-                </div>
-              </div>
-            </div>
-            
-            {/* Sticky Pricing Card */}
-            <div className="w-full lg:w-96 shrink-0">
-              <div className="bg-neutral-950 border border-neutral-800 rounded-2xl overflow-hidden shadow-2xl sticky top-24">
-                <div className="h-48 relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                    <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30 cursor-pointer hover:bg-white/30 transition-colors">
-                      <Video className="h-6 w-6 text-white ml-1" />
-                    </div>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <div className="text-3xl font-bold text-white mb-6">{course.price}</div>
-                  <Link href={`/checkout/${course.id}`} className="w-full flex items-center justify-center py-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-500 transition-colors shadow-[0_0_20px_rgba(37,99,235,0.2)]">
-                    Enroll Now
-                  </Link>
-                  <p className="text-xs text-center text-neutral-500 mt-4">30-Day Money-Back Guarantee</p>
-                  
-                  <div className="mt-6 pt-6 border-t border-neutral-800 space-y-3 text-sm text-neutral-300">
-                    <div className="flex items-center gap-3"><Video className="h-4 w-4 text-neutral-500" /> {course.duration} on-demand video</div>
-                    <div className="flex items-center gap-3"><FileText className="h-4 w-4 text-neutral-500" /> 12 downloadable resources</div>
-                    <div className="flex items-center gap-3"><CheckCircle className="h-4 w-4 text-neutral-500" /> Certificate of completion</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            )}
+
+            {/* Not enrolled student */}
+            {!enrolled && user?.role === 'STUDENT' && (
+              <button
+                onClick={handleEnroll}
+                disabled={enrolling}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-colors disabled:opacity-50"
+              >
+                {enrolling ? 'Enrolling…' : 'Enroll Now'}
+              </button>
+            )}
+
+            {/* Instructor / Admin */}
+            {isInstructor && (
+              <Link
+                href="/dashboard/instructor"
+                className="block text-center w-full bg-neutral-800 hover:bg-neutral-700 text-white font-medium py-3 px-4 rounded-xl transition-colors"
+              >
+                Manage in Dashboard
+              </Link>
+            )}
+
+            {/* Not logged in */}
+            {!user && (
+              <Link
+                href="/login"
+                className="block text-center w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-colors"
+              >
+                Sign in to Enroll
+              </Link>
+            )}
           </div>
         </div>
 
-        {/* Content Section */}
-        <div className="max-w-7xl mx-auto px-6 py-12 lg:pr-96">
-          <div className="max-w-3xl">
-            {/* What you'll learn */}
-            <div className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-8 mb-12">
-              <h2 className="text-2xl font-bold text-white mb-6">What you'll learn</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {course.whatYouWillLearn.map((item, idx) => (
-                  <div key={idx} className="flex gap-3">
-                    <CheckCircle className="h-5 w-5 text-emerald-500 shrink-0" />
-                    <span className="text-neutral-300">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Course Curriculum */}
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-6">Course Content</h2>
-              <div className="space-y-4">
-                {course.modules.map((mod, idx) => (
-                  <div key={idx} className="border border-neutral-800 rounded-xl overflow-hidden bg-neutral-900/30">
-                    <div className="bg-neutral-900 p-4 flex items-center justify-between">
-                      <h3 className="font-semibold text-white">{mod.title}</h3>
-                      <span className="text-sm text-neutral-400">{mod.lessons.length} lessons • {mod.duration}</span>
-                    </div>
-                    <div className="divide-y divide-neutral-800/50">
-                      {mod.lessons.map((lesson, lIdx) => (
-                        <div key={lIdx} className="p-4 flex items-center justify-between hover:bg-neutral-800/30 transition-colors">
-                          <div className="flex items-center gap-3 text-neutral-300">
-                            {lesson.type === 'video' ? <Video className="h-4 w-4 text-blue-500" /> : 
-                             lesson.type === 'pdf' ? <FileText className="h-4 w-4 text-orange-500" /> : 
-                             <CheckCircle className="h-4 w-4 text-purple-500" />}
-                            <span>{lesson.title}</span>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <span className="text-sm text-neutral-500">{lesson.duration}</span>
-                            <Lock className="h-4 w-4 text-neutral-600" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
+        {/* Curriculum */}
+        <h2 className="text-2xl font-bold mb-6">Course Curriculum</h2>
+        {course.modules.length === 0 ? (
+          <div className="bg-neutral-900/50 border border-neutral-800 border-dashed rounded-xl p-10 text-center text-neutral-500">
+            No modules have been added yet.
           </div>
-        </div>
-      </main>
+        ) : (
+          <div className="space-y-4">
+            {course.modules.map((mod, i) => (
+              <div key={mod.id} className="border border-neutral-800 rounded-xl overflow-hidden bg-neutral-900/40">
+                <div className="px-5 py-4 bg-neutral-800/50 flex justify-between items-center">
+                  <h3 className="font-semibold text-white">
+                    Module {i + 1}: {mod.title}
+                  </h3>
+                  <span className="text-xs text-neutral-500">
+                    {mod.lessons.length} lesson{mod.lessons.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className="divide-y divide-neutral-800/50">
+                  {mod.lessons.length === 0 && (
+                    <p className="px-5 py-3 text-sm text-neutral-500">No lessons yet.</p>
+                  )}
+                  {mod.lessons.map((lesson) => (
+                    <div key={lesson.id} className="px-5 py-3 flex items-center gap-3">
+                      {enrolled ? lessonIcon(lesson.type) : <Lock className="h-4 w-4 text-neutral-600" />}
+                      <span className="flex-1 text-sm text-neutral-300">{lesson.title}</span>
+                      <span className="text-xs bg-neutral-800 px-2 py-0.5 rounded text-neutral-400">
+                        {lesson.type}
+                      </span>
+                      {lesson.duration && (
+                        <span className="text-xs text-neutral-500 ml-2">{lesson.duration}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

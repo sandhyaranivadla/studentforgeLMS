@@ -116,7 +116,7 @@ export default function LiveClass() {
             <div className="flex-1 p-4 overflow-y-auto space-y-4">
               <div className="text-sm">
                 <span className="font-semibold text-blue-400 mr-2">Dr. Smith</span>
-                <span className="text-neutral-300">Welcome everyone! We'll begin in 2 minutes.</span>
+                <span className="text-neutral-300">Welcome everyone! We&apos;ll begin in 2 minutes.</span>
               </div>
               <div className="text-sm">
                 <span className="font-semibold text-purple-400 mr-2">Sarah J.</span>

@@ -1,0 +1,294 @@
+StudentForge LMS
+Product Requirements Document — v2.0
+Real-Time Learning Management System
+Prepared for: Engineering, Product, Design, QA
+Status: Scoped for accelerated 4-day production build (team of 4–8)
+1. Document Overview
+Project Name: StudentForge LMS
+Document Version: 2.0 — supersedes v1.0. Adds full student-experience scope, a phased release plan built around a 4-day production sprint, non-functional requirements, and a data model overview.
+Target Audience: Engineering, Product, Design, QA
+Core Value Proposition: An integrated, real-time Learning Management System blending asynchronous course delivery with synchronous live classrooms, persistent messaging, calling, assessments, and a complete student engagement layer (progress, credentials, discovery, and support).
+Build Context: This document is scoped in three phases. Phase 1 is the 4-day production sprint for a 4–8 person team and covers only what real students need on day one. Phases 2 and 3 extend the platform to full feature parity with this PRD. See Section 5 for the exact breakdown.
+2. Product Objectives & Success Metrics
+2.1 Objectives
+Deliver a seamless dual-learning experience (self-paced Courses + real-time Live Classes) in a unified interface.
+Provide low-latency, scalable real-time collaboration (chat, audio/video streaming, presence detection).
+Maintain high data reliability and cross-region resilience for globally distributed learners.
+Give students a complete learning loop — discover, enroll, learn, get assessed, get credentialed — without leaving the platform.
+Ship a safe, tested Phase 1 MVP within 4 days without compromising security or payment integrity.
+2.2 Key Performance Indicators (KPIs)
+Metric
+Target
+Applies From
+Video Quality & Reliability
+< 0.5% session drop rate during live classes
+Phase 1
+Real-time Latency
+Chat delivery latency < 150 ms globally
+Phase 1
+System Uptime
+99.95% API and database availability
+Phase 1
+Payment Success Rate
+≥ 98% successful transactions, < 1% disputed
+Phase 1
+Course Completion Rate
+≥ 40% of enrolled students complete first module within 14 days
+Phase 2
+Support Response Time
+First response to student query within 24 hrs
+Phase 2
+3. User Personas & Roles
+3.1 Student
+Goal: Learn a skill on their own schedule, get help when stuck, and walk away with proof of completion.
+Frustrations with typical LMS tools: content locked behind clunky players, no offline access, doubts go unanswered, no sense of progress or motivation to continue.
+Context of use: mixed devices (mobile-heavy for video, desktop for assignments), variable internet quality, time-constrained around work or school.
+Core needs: fast discovery, frictionless enrollment/payment, reliable playback, live class access without setup pain, a place to ask doubts, visible progress, and a credential at the end.
+Student Permissions
+Browse & enroll in courses, manage wishlist
+Watch VODs and join live sessions
+1:1 / group chat and calls
+Submit assignments, take quizzes, view grades and feedback
+Manage own profile, payments, and notification preferences
+3.2 Instructor
+Goal: Create and deliver course content efficiently, run engaging live sessions, and grade fairly without administrative overhead.
+Frustrations with typical LMS tools: slow content upload pipelines, no visibility into student engagement, moderation tools bolted on as an afterthought.
+Core needs: simple content authoring/versioning, reliable scheduling, in-session moderation controls, a single place to grade and give feedback.
+Instructor Permissions
+Create & manage courses (draft, review, publish, version)
+Schedule/host live classes
+Grade assessments and give feedback
+Moderate class chat and manage session participants
+View per-course engagement analytics
+3.3 Admin
+Goal: Keep the platform compliant, financially accountable, and healthy at scale without manual firefighting.
+Frustrations with typical LMS tools: analytics scattered across tools, unclear audit trails, manual role management.
+Core needs: centralized user/role governance, platform-wide analytics, billing oversight, and compliance reporting.
+Admin Permissions
+User & role governance
+Analytics & compliance reporting
+Platform billing & settings
+Content moderation escalation and audit log access
+4. Technical Stack Architecture
+Layer
+Technology
+Primary Responsibility
+Frontend
+Next.js (TypeScript, TailwindCSS)
+SSR/SSG delivery, interactive dashboards, media rendering
+Backend
+NestJS (TypeScript, Node.js)
+REST API, WebSocket Gateways, authentication
+Database
+CockroachDB
+Distributed, ACID-compliant relational data storage
+Video / Audio
+Zoom Video SDK (Web)
+Live classes AND 1:1 calls — multi-party and ephemeral rooms
+Real-Time Messaging
+Socket.io
+Low-latency chat, presence, typing indicators
+Notifications
+Firebase Cloud Messaging
+Push notifications for offline users, reminders
+Object Storage
+AWS S3
+Storage for recorded classes, course videos, PDFs
+Note: Video strategy: Zoom Video SDK is used for both scheduled live classes and ad-hoc 1:1 tutoring calls. Raw WebRTC is intentionally out of scope — building and operating a separate signaling/TURN/STUN stack in parallel would consume days the 4-day sprint does not have, for no functional gain over what Zoom SDK already provides.
+Note: Database: CockroachDB is confirmed as the platform database per team decision. Its distributed, multi-region design is the right long-term choice once the platform scales past a single region; in Phase 1 it is used in single-region mode to keep operational complexity low while preserving the migration-free path to multi-region later.
+5. Release Plan & Phasing
+This is the section that answers "what do we build first." Everything in Section 6 is tagged by phase. Do not start Phase 2 or 3 items during the 4-day sprint.
+5.1 Phase 1 — Day 1 to Day 4 (Production MVP)
+Goal: one core learning loop, fully working end-to-end, safe for real students and real payments.
+Day-by-Day Breakdown (team of 4–8)
+Day 0/1 — Lock scope and schema. Assign one module per pair: (a) Auth & user roles, (b) Course content & playback, (c) Live classes via Zoom SDK, (d) Chat & notifications, (e) Payments & enrollment. Scaffold with Antigravity agents in parallel where possible.
+Day 2 — Build core CRUD and flows per module. Course upload/playback, live class scheduling/join, 1:1 and course chat, payment checkout. Agents handle boilerplate; humans review auth, payment, and data-access code line by line.
+Day 3 — Integration. Wire modules together into one flow: enroll → watch/join live → chat → get graded on a simple quiz. This is where agent assistance helps least — plan for manual engineering time here.
+Day 4 — Manual QA on the non-negotiables (below), fix blockers only, deploy. No new features on Day 4.
+Phase 1 Non-Negotiables (cannot be cut, whatever else is descoped)
+Role-scoped authentication and authorization (Student / Instructor / Admin)
+HTTPS everywhere, no hardcoded secrets, basic input validation on all forms
+A tested payment flow, including at least one failure-path test (declined card, timeout)
+A privacy notice / consent flow before collecting any student data
+Zoom SDK token generation and expiry handled correctly (no orphaned sessions)
+Phase 1 Feature Scope
+Async Courses: upload, hierarchical structure, playback with speed/auto-resume/progress tracking
+Live Classes: scheduling, join flow, screen share, host moderation, cloud recording to S3
+Communication: course chat, 1:1 chat, push notifications for class reminders
+Payments: single payment method, checkout, invoice/receipt, basic refund path
+Assessments: one quiz type (auto-graded, single attempt) — enough to close the learning loop
+Student Dashboard: enrolled courses, continue-watching, upcoming live classes (minimum viable version)
+Explicitly Deferred out of Phase 1
+Gamification (streaks, badges, leaderboards)
+Notes/bookmarks tied to video timestamp
+Downloadable offline content
+Certificates and LinkedIn sharing
+Discussion forums, peer review, structured Q&A boards
+Course search/filter/recommendation engine, ratings & reviews, wishlist
+Multi-language/localization, dark mode
+Parent/guardian view
+Multiple payment methods, coupons, subscriptions/EMI
+Plagiarism check, multiple quiz types, rubric-based grading
+5.2 Phase 2 — Weeks 2 to 6 (Engagement & Retention)
+Goal: turn the working MVP into something students want to keep using.
+Notes/bookmarks, downloadable offline content, searchable transcripts/captions
+Certificates of completion, shareable to LinkedIn
+Gamification: streaks, badges, progress milestones
+Structured Q&A/discussion board per lesson (persistent, separate from live chat)
+Course search/filter, ratings & reviews, wishlist, recommendations
+Assignment submission with file upload, instructor-graded assessments
+Granular notification preferences and digest option
+Calendar integration (Google/Outlook) with automated reminders
+Multi-region CockroachDB rollout, if user base is now cross-region
+5.3 Phase 3 — Beyond Month 2 (Scale & Compliance)
+Multiple payment methods, subscriptions, coupons/discounts
+Plagiarism checking, rubric-based grading, peer review workflows
+Multi-language/localization, WCAG accessibility audit and fixes, dark mode
+Parent/guardian view (if K-12 audience is confirmed)
+In-app AI assistant / help chat for common student questions
+Formal compliance program: FERPA/GDPR/COPPA review, data retention policy, DPA with vendors
+Advanced admin analytics and platform-wide reporting dashboards
+6. Functional Requirements
+6.1 Module 1: Asynchronous Courses
+Curriculum & Content Management  [Phase 1]
+Hierarchical structure: Course → Modules → Lessons
+Support for video, PDF, and quiz content types within a lesson
+Draft / review / publish workflow with basic versioning  [Phase 2]
+Student Learning Experience  [Phase 1]
+Video playback engine with speed controls and auto-resume
+Progress tracking per lesson and per course
+Notes tied to a specific video timestamp  [Phase 2]
+Bookmarks for revisiting key sections  [Phase 2]
+Downloadable video/PDF for offline access  [Phase 2]
+Searchable transcripts and closed captions  [Phase 2]
+6.2 Module 2: Synchronous Live Classes
+Scheduling & Access Control  [Phase 1]
+Instructors schedule sessions; system generates secure Zoom Video SDK tokens with correct expiry handling
+Calendar integration (Google/Outlook) with reminders  [Phase 2]
+Virtual Classroom Controls  [Phase 1]
+Dynamic grid view, screen sharing, digital whiteboard, hand-raising, host moderation tools
+In-session polls/quizzes for engagement  [Phase 2]
+Live captions during session  [Phase 3]
+Cloud Recording  [Phase 1]
+Automatic session recording pushed to S3 and auto-published to the course archive
+Searchable/indexed recording archive (not just raw VOD)  [Phase 2]
+Per-student attendance record  [Phase 2]
+6.3 Module 3: Communication Engine
+Persistent Real-Time Messaging  [Phase 1]
+Powered by Socket.io for course-wide discussions, live session Q&A, and 1:1 direct messages
+Structured, persistent Q&A/discussion board per lesson, distinct from ephemeral live chat  [Phase 2]
+Peer discussion forums  [Phase 2]
+Audio & Video Calling  [Phase 1]
+Ad-hoc calls initiated from 1:1 chats for tutoring, using Zoom Video SDK ephemeral rooms
+Notification System  [Phase 1 minimum, Phase 2 full]
+Firebase FCM for class reminders, offline message alerts, and course updates  [Phase 1]
+Granular per-category notification controls and digest option  [Phase 2]
+6.4 Module 4: Assessments & Grading
+Auto-graded single-attempt quiz  [Phase 1]
+Assignment submission with file upload  [Phase 2]
+Instructor-graded assessments with feedback  [Phase 2]
+Multiple quiz types (MCQ, short answer, timed)  [Phase 2]
+Plagiarism check on submissions  [Phase 3]
+Rubric-based grading and peer review  [Phase 3]
+Practice tests separate from graded assessments  [Phase 2]
+6.5 Module 5: Student Engagement & Credentialing
+Student dashboard: enrolled courses, continue-watching, upcoming live classes  [Phase 1, minimum version]
+Gamification: streaks, badges, milestone tracking  [Phase 2]
+Certificate of completion, downloadable and shareable to LinkedIn  [Phase 2]
+Course completion history / transcript  [Phase 2]
+Course search, filter, ratings & reviews, wishlist, personalized recommendations  [Phase 2]
+Multi-device sync of progress  [Phase 1, since it falls out of correct session/data design]
+6.6 Module 6: Payments & Enrollment
+Single payment method checkout, invoice/receipt generation  [Phase 1]
+Basic refund/cancellation path  [Phase 1]
+Multiple payment methods (cards, wallets, EMI/installments)  [Phase 3]
+Coupons / discount codes  [Phase 3]
+Subscription and institutional licensing billing  [Phase 3]
+6.7 Module 7: Admin & Platform
+User & role governance  [Phase 1]
+Basic platform usage analytics  [Phase 1, minimum version]
+Platform billing & settings  [Phase 1]
+Advanced analytics and compliance reporting dashboards  [Phase 3]
+Audit log access and content moderation escalation  [Phase 2]
+Parent/guardian view  [Phase 3, only if K-12 audience confirmed]
+7. Non-Functional Requirements
+7.1 Security
+All traffic over HTTPS; secrets managed via environment/secret store, never hardcoded or committed
+Role-based access control enforced server-side on every endpoint, not just hidden in the UI
+Input validation and sanitization on all user-submitted content (forms, chat, file uploads)
+Any AI-agent-generated code touching auth, payments, or data access is reviewed by a human before merge, given documented prompt-injection risks in agentic coding tools
+7.2 Privacy & Compliance
+Privacy notice and consent flow before collecting student data — required even for Phase 1
+Formal FERPA / GDPR / COPPA review scheduled for Phase 3, sooner if any student is confirmed to be a minor
+Data retention and deletion policy defined before Phase 2 launch
+7.3 Accessibility
+Captions and transcripts for recorded content  [Phase 2]
+WCAG 2.1 AA audit and remediation  [Phase 3]
+Multi-language UI and subtitles  [Phase 3]
+7.4 Performance & Scalability
+Chat delivery latency under 150 ms globally (see KPIs)
+Live class session drop rate under 0.5%
+API and database uptime of 99.95%
+Single-region CockroachDB for Phase 1; multi-region rollout planned for Phase 2 once user base is cross-region
+7.5 Reliability & Recovery
+Automated database backups from Day 1 of Phase 1, not deferred
+Documented incident response path for payment or video-infra failures during live sessions
+8. Data Model Overview (High Level)
+Full ER diagrams to be maintained separately by engineering; this section lists the core entities Phase 1 must support so schema decisions aren't made ad hoc mid-sprint.
+Entity
+Key Relationships
+Notes
+User
+Has one Role (Student/Instructor/Admin)
+Auth identity, profile, notification prefs
+Course
+Has many Modules; belongs to Instructor
+Draft/published state
+Module
+Has many Lessons
+Ordered within Course
+Lesson
+Has Video/PDF/Quiz content
+Progress tracked per Student
+Enrollment
+Links Student to Course
+Tracks payment status, progress %
+LiveSession
+Belongs to Course; has many Attendees
+Zoom token, recording URL, start/end time
+Message
+Belongs to Chat Thread (course, session, or 1:1)
+Socket.io-delivered, persisted for history
+Assessment
+Belongs to Lesson or Course; has many Submissions
+Auto or instructor graded
+Payment
+Belongs to Enrollment
+Provider reference, status, invoice
+9. Out of Scope (All Phases, Unless Re-Prioritized)
+Raw WebRTC implementation — Zoom Video SDK covers all video/audio use cases
+Native mobile apps — Phase 1–3 are responsive web via Next.js; native app is a future decision point, not committed in this PRD
+AI-generated course content or AI tutoring beyond a Phase-3 help chat
+White-label / multi-tenant support for other institutions
+10. Risks & Mitigations
+Risk
+Impact
+Mitigation
+4-day timeline slips on integration (Day 3)
+MVP launches with a broken core loop
+Freeze scope after Day 1; no new features once integration starts
+Payment edge cases untested
+Real financial/legal exposure
+Non-negotiable: test at least one failure path before launch
+Agent-generated code in security-sensitive paths
+Vulnerabilities in auth/payment/data access
+Mandatory human review on those specific modules, no exceptions
+CockroachDB operational unfamiliarity under time pressure
+Debugging distributed DB issues eats sprint time
+Run single-region for Phase 1; keep queries Postgres-compatible
+Zoom SDK token/session bugs during live class
+Students can't join class — high-visibility failure
+Dedicated manual QA pass on join/rejoin/expiry flows on Day 4
+Scope creep from Section 6 Phase 2/3 items
+Phase 1 never ships
+PM enforces the phase tags in Section 6 as a hard boundary

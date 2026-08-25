@@ -1,7 +1,31 @@
-"use client";
-import { useEffect, useState } from 'react';
+'use client';
 import { useRouter } from 'next/navigation';
 import { BookOpen, LogOut, LayoutDashboard, Settings } from 'lucide-react';
+import React from 'react';
+import Cookies from 'js-cookie';
+import { jwtDecode } from 'jwt-decode';
+
+interface StoredUser {
+  name?: string;
+  email?: string;
+}
+
+interface JwtPayload {
+  name?: string;
+  email: string;
+  role: string;
+}
+
+function getUserFromCookie(): StoredUser | null {
+  const token = Cookies.get('token');
+  if (!token) return null;
+  try {
+    const decoded = jwtDecode<JwtPayload>(token);
+    return { name: decoded.name, email: decoded.email };
+  } catch {
+    return null;
+  }
+}
 
 export default function DashboardLayout({
   children,
@@ -9,36 +33,38 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const user = getUserFromCookie();
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    
-    if (!token || !userData) {
-      router.push('/login');
-    } else {
-      setUser(JSON.parse(userData));
-    }
-  }, [router]);
-
-  if (!user) return <div className="min-h-screen bg-neutral-950 flex items-center justify-center text-white">Loading...</div>;
+  if (!user) {
+    void router.push('/login');
+    return (
+      <div className="min-h-screen bg-neutral-950 flex items-center justify-center text-white">
+        Redirecting...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-neutral-950 text-white flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-neutral-900 border-r border-neutral-800 flex flex-col hidden md:flex">
+      <aside className="w-64 bg-neutral-900 border-r border-neutral-800 flex-col hidden md:flex">
         <div className="p-6 flex items-center gap-3">
           <BookOpen className="text-blue-500" />
           <span className="font-bold text-xl tracking-tight">StudentForge</span>
         </div>
-        
+
         <nav className="flex-1 px-4 py-4 space-y-2">
-          <a href="/dashboard" className="flex items-center gap-3 bg-blue-600/10 text-blue-500 px-4 py-3 rounded-lg font-medium transition-colors">
+          <a
+            href="/dashboard"
+            className="flex items-center gap-3 bg-blue-600/10 text-blue-500 px-4 py-3 rounded-lg font-medium transition-colors"
+          >
             <LayoutDashboard size={20} />
             Dashboard
           </a>
-          <a href="#" className="flex items-center gap-3 text-neutral-400 hover:text-white hover:bg-neutral-800 px-4 py-3 rounded-lg font-medium transition-colors">
+          <a
+            href="#"
+            className="flex items-center gap-3 text-neutral-400 hover:text-white hover:bg-neutral-800 px-4 py-3 rounded-lg font-medium transition-colors"
+          >
             <Settings size={20} />
             Settings
           </a>
@@ -51,14 +77,15 @@ export default function DashboardLayout({
             </div>
             <div>
               <p className="text-sm font-medium">{user.name || 'User'}</p>
-              <p className="text-xs text-neutral-500 truncate w-32">{user.email}</p>
+              <p className="text-xs text-neutral-500 truncate w-32">
+                {user.email}
+              </p>
             </div>
           </div>
-          <button 
+          <button
             onClick={() => {
-              localStorage.removeItem('token');
-              localStorage.removeItem('user');
-              router.push('/login');
+              Cookies.remove('token');
+              void router.push('/login');
             }}
             className="w-full flex items-center gap-2 text-neutral-400 hover:text-red-400 px-4 py-2 rounded-lg transition-colors"
           >

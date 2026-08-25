@@ -7,17 +7,101 @@ datasource db {
 }
 
 model User {
-  id           String       @id @default(uuid())
-  email        String
-  passwordHash String
-  name         String?
-  role         Role         @default(STUDENT)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id             String           @id @default(uuid())
+  email          String
+  passwordHash   String
+  name           String?
+  role           Role             @default(STUDENT)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  courses        Course[]         @relation("InstructorCourses")
+  enrollments    Enrollment[]
+  lessonProgress LessonProgress[]
+  messages       Message[]
+}
 
-  enrollments  Enrollment[]
-  messages     Message[]
-  courses      Course[]     @relation("InstructorCourses")
+model Course {
+  id             String           @id @default(uuid())
+  title          String
+  description    String
+  price          Float            @default(0.0)
+  instructorId   String
+  published      Boolean          @default(false)
+  thumbnail      String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  instructor     User             @relation("InstructorCourses", fields: [instructorId], references: [id])
+  modules        CourseModule[]
+  enrollments    Enrollment[]
+  lessonProgress LessonProgress[]
+  liveSessions   LiveSession[]
+  messages       Message[]
+}
+
+model CourseModule {
+  id         String   @id @default(uuid())
+  title      String
+  courseId   String
+  orderIndex Int
+  course     Course   @relation(fields: [courseId], references: [id])
+  lessons    Lesson[]
+}
+
+model Lesson {
+  id         String           @id @default(uuid())
+  title      String
+  type       LessonType
+  duration   String?
+  moduleId   String
+  orderIndex Int
+  contentUrl String?
+  module     CourseModule     @relation(fields: [moduleId], references: [id])
+  progress   LessonProgress[]
+}
+
+model LessonProgress {
+  id             String    @id @default(uuid())
+  studentId      String
+  lessonId       String
+  courseId       String
+  completed      Boolean   @default(false)
+  completedAt    DateTime?
+  lastAccessedAt DateTime  @default(now())
+  course         Course    @relation(fields: [courseId], references: [id])
+  lesson         Lesson    @relation(fields: [lessonId], references: [id])
+  student        User      @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, lessonId])
+}
+
+model Enrollment {
+  id        String           @id @default(uuid())
+  studentId String
+  courseId  String
+  progress  Float            @default(0.0)
+  status    EnrollmentStatus @default(ACTIVE)
+  createdAt DateTime         @default(now())
+  course    Course           @relation(fields: [courseId], references: [id])
+  student   User             @relation(fields: [studentId], references: [id])
+}
+
+model LiveSession {
+  id            String   @id @default(uuid())
+  courseId      String
+  title         String
+  startTime     DateTime
+  zoomMeetingId String?
+  course        Course   @relation(fields: [courseId], references: [id])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String
+  senderId  String
+  courseId  String
+  timestamp DateTime @default(now())
+  course    Course   @relation(fields: [courseId], references: [id])
+  sender    User     @relation(fields: [senderId], references: [id])
 }
 
 enum Role {
@@ -36,74 +120,4 @@ enum EnrollmentStatus {
   ACTIVE
   COMPLETED
   CANCELLED
-}
-
-model Course {
-  id           String         @id @default(uuid())
-  title        String
-  description  String
-  price        Float          @default(0.0)
-  instructorId String
-  published    Boolean        @default(false)
-  thumbnail    String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-
-  instructor   User           @relation("InstructorCourses", fields: [instructorId], references: [id])
-  modules      CourseModule[]
-  enrollments  Enrollment[]
-  liveSessions LiveSession[]
-  messages     Message[]
-}
-
-model CourseModule {
-  id         String   @id @default(uuid())
-  title      String
-  courseId   String
-  orderIndex Int
-  course     Course   @relation(fields: [courseId], references: [id])
-  lessons    Lesson[]
-}
-
-model Lesson {
-  id         String       @id @default(uuid())
-  title      String
-  type       LessonType
-  duration   String?
-  moduleId   String
-  orderIndex Int
-  module     CourseModule @relation(fields: [moduleId], references: [id])
-}
-
-model Enrollment {
-  id        String           @id @default(uuid())
-  studentId String
-  courseId  String
-  progress  Float            @default(0.0)
-  status    EnrollmentStatus @default(ACTIVE)
-  createdAt DateTime         @default(now())
-
-  student   User             @relation(fields: [studentId], references: [id])
-  course    Course           @relation(fields: [courseId], references: [id])
-}
-
-model LiveSession {
-  id            String   @id @default(uuid())
-  courseId      String
-  title         String
-  startTime     DateTime
-  zoomMeetingId String?
-  
-  course        Course   @relation(fields: [courseId], references: [id])
-}
-
-model Message {
-  id        String   @id @default(uuid())
-  content   String
-  senderId  String
-  courseId  String
-  timestamp DateTime @default(now())
-
-  sender    User     @relation(fields: [senderId], references: [id])
-  course    Course   @relation(fields: [courseId], references: [id])
 }

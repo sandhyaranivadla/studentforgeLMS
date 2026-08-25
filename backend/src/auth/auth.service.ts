@@ -1,8 +1,13 @@
-import { Injectable, UnauthorizedException, ConflictException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { Role } from '@prisma/client';
+import { Role, User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -24,9 +29,19 @@ export class AuthService {
       });
 
       return this.generateToken(user);
-    } catch (e: any) {
-      console.error('REGISTER ERROR:', e);
-      throw new InternalServerErrorException({ message: e.message || 'Error occurred', error: e.toString() });
+    } catch (e: unknown) {
+      if (
+        e instanceof ConflictException ||
+        e instanceof InternalServerErrorException
+      ) {
+        throw e;
+      }
+      const errorMessage =
+        e instanceof Error ? e.message : 'An unknown error occurred';
+      throw new InternalServerErrorException({
+        message: errorMessage,
+        error: String(e),
+      });
     }
   }
 
@@ -44,7 +59,7 @@ export class AuthService {
     return this.generateToken(user);
   }
 
-  private generateToken(user: any) {
+  private generateToken(user: User) {
     const payload = { sub: user.id, email: user.email, role: user.role };
     return {
       access_token: this.jwtService.sign(payload),
@@ -53,7 +68,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
         role: user.role,
-      }
+      },
     };
   }
 }

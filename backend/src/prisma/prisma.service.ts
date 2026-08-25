@@ -5,23 +5,34 @@ import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as fs from 'fs';
 
+interface SslConfig {
+  rejectUnauthorized: boolean;
+  ca: string;
+}
+
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
   constructor() {
-    let connectionString = process.env.DATABASE_URL || '';
-    let ssl: any = false;
+    const connectionString = process.env.DATABASE_URL || '';
+    let ssl: SslConfig | false = false;
 
     if (connectionString && connectionString.includes('sslmode=verify-full')) {
       const match = connectionString.match(/sslrootcert=([^&]+)/);
       if (match && match[1]) {
-        ssl = {
-          rejectUnauthorized: true,
-          ca: fs.readFileSync(match[1]).toString(),
-        };
+        try {
+          ssl = {
+            rejectUnauthorized: true,
+            ca: fs.readFileSync(match[1]).toString(),
+          };
+        } catch {
+          console.warn(
+            `Could not read sslrootcert from ${match[1]}, continuing without custom pg ssl ca`,
+          );
+        }
       }
     }
 
-    const pool = new Pool({ connectionString, ssl });
+    const pool = new Pool({ connectionString, ssl: ssl || undefined });
     const adapter = new PrismaPg(pool);
     super({ adapter });
   }
