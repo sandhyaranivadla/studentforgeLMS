@@ -13,6 +13,11 @@ import {
   CheckCircle,
   EyeOff,
 } from 'lucide-react';
+import AssignmentList from './components/AssignmentList';
+import QuizList from './components/QuizList';
+import LiveClassList from './components/LiveClassList';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
+import AnnouncementList from './components/AnnouncementList';
 
 /* ─── Types ─────────────────────────────────────────────── */
 interface Lesson {
@@ -46,6 +51,10 @@ const API = 'http://localhost:4000';
 
 export default function InstructorDashboard() {
   const { token } = useAuth();
+  
+  useEffect(() => {
+    console.log('[InstructorDashboard] JWT Token:', token ? `${token.substring(0, 50)}...` : 'NO TOKEN');
+  }, [token]);
 
   /* Course list */
   const [courses, setCourses] = useState<Course[]>([]);
@@ -76,13 +85,17 @@ export default function InstructorDashboard() {
   const fetchCourses = async () => {
     try {
       setLoadingCourses(true);
+      console.log('[InstructorDashboard] Fetching courses with token');
       const res = await fetch(`${API}/courses`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log('[InstructorDashboard] /courses response status:', res.status);
       if (!res.ok) throw new Error(`Error ${res.status}`);
       const data = await res.json();
+      console.log('[InstructorDashboard] /courses response data:', data);
       setCourses(Array.isArray(data) ? data : []);
     } catch (e) {
+      console.error('[InstructorDashboard] fetchCourses error:', e);
       setCoursesError(e instanceof Error ? e.message : 'Failed to load courses');
     } finally {
       setLoadingCourses(false);
@@ -573,6 +586,31 @@ export default function InstructorDashboard() {
                           )}
                         </div>
                       )}
+
+                      {/* Assignments Section */}
+                      <div className="border-t border-neutral-800 px-4 py-4 bg-neutral-950/30">
+                        <AssignmentList courseId={course.id} token={token} />
+                      </div>
+
+                      {/* Quizzes Section */}
+                      <div className="border-t border-neutral-800 px-4 py-4 bg-neutral-950/30">
+                        <QuizList courseId={course.id} token={token} />
+                      </div>
+
+                      {/* Live Classes Section */}
+                      <div className="border-t border-neutral-800 px-4 py-4 bg-neutral-950/30">
+                        <LiveClassList courseId={course.id} token={token} />
+                      </div>
+
+                      {/* Announcements Section */}
+                      <div className="border-t border-neutral-800 px-4 py-4 bg-neutral-950/30">
+                        <AnnouncementList courseId={course.id} token={token} />
+                      </div>
+
+                      {/* Analytics Section */}
+                      <div className="border-t border-neutral-800 px-4 py-4 bg-neutral-950/30">
+                        <AnalyticsDashboard courseId={course.id} token={token} />
+                      </div>
                     </div>
                   );
                 })}

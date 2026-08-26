@@ -16,6 +16,7 @@ import {
   AlertCircle,
   BookOpen,
 } from 'lucide-react';
+import AnnouncementsFeed from './components/AnnouncementsFeed';
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 interface Lesson {
@@ -394,6 +395,11 @@ export default function LearnPage({ params }: { params: Promise<{ courseId: stri
             <span className="text-xs text-neutral-500">
               {completedCount}/{totalLessons} done
             </span>
+          </div>
+
+          {/* Announcements Feed */}
+          <div className="px-4 py-3 border-b border-neutral-800">
+            <AnnouncementsFeed courseId={courseId} token={token} />
           </div>
 
           <div className="divide-y divide-neutral-800">

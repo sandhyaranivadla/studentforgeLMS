@@ -10,6 +10,7 @@ import {
   AlertCircle,
   TrendingUp,
 } from 'lucide-react';
+import StudentAssignmentList from './components/StudentAssignmentList';
 
 const API = 'http://localhost:4000';
 
@@ -257,6 +258,9 @@ export default function StudentDashboard() {
           </>
         )}
       </div>
+
+      {/* Assignments Section */}
+      <StudentAssignmentList token={token} />
     </div>
   );
 }
