@@ -15,7 +15,9 @@ import {
   Lock,
   AlertCircle,
   BookOpen,
+  MessageSquare,
 } from 'lucide-react';
+import ChatPanel from '@/components/ChatPanel';
 
 /* ─── Types ─────────────────────────────────────────────────────── */
 interface Lesson {
@@ -72,6 +74,7 @@ export default function LearnPage({ params }: { params: Promise<{ courseId: stri
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [completing, setCompleting] = useState(false);
   const [completeError, setCompleteError] = useState('');
+  const [chatOpen, setChatOpen] = useState(false);
 
   const isStudent = user?.role === 'STUDENT';
 
@@ -381,6 +384,16 @@ export default function LearnPage({ params }: { params: Promise<{ courseId: stri
           <div className="flex items-center gap-2 text-blue-500">
             <BookOpen size={18} />
           </div>
+          <button
+            onClick={() => setChatOpen(!chatOpen)}
+            className={`p-2 rounded-lg transition-colors ml-2 ${
+              chatOpen 
+                ? 'bg-blue-600/20 text-blue-400 hover:bg-blue-600/30' 
+                : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
+            }`}
+          >
+            <MessageSquare size={20} />
+          </button>
         </div>
       </header>
 
@@ -459,6 +472,13 @@ export default function LearnPage({ params }: { params: Promise<{ courseId: stri
         <main className="flex-1 flex flex-col overflow-hidden bg-neutral-950">
           {renderContent()}
         </main>
+
+        {/* Chat Panel */}
+        <aside 
+          className={`${chatOpen ? 'w-80' : 'w-0 opacity-0 pointer-events-none'} shrink-0 bg-neutral-900 border-l border-neutral-800 transition-all duration-300 ease-in-out`}
+        >
+          <ChatPanel courseId={courseId} />
+        </aside>
       </div>
     </div>
   );

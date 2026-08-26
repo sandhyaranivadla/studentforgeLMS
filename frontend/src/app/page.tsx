@@ -59,7 +59,7 @@ export default function Home() {
             </div>
             <h3 className="text-xl font-bold text-white mb-3">Live Classrooms</h3>
             <p className="text-neutral-400 leading-relaxed">
-              Join low-latency Zoom-powered live sessions directly from your browser. Ask questions, raise your hand, and collaborate.
+              Join seamless live sessions directly from your browser. Ask questions, raise your hand, and collaborate.
             </p>
           </div>
 

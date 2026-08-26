@@ -31,6 +31,12 @@ interface CourseModule {
   lessons: Lesson[];
 }
 
+interface LiveSession {
+  id: string;
+  title: string;
+  startTime: string;
+}
+
 interface Course {
   id: string;
   title: string;
@@ -39,6 +45,7 @@ interface Course {
   published: boolean;
   thumbnail: string | null;
   modules: CourseModule[];
+  liveSessions?: LiveSession[];
 }
 
 /* ─── Helpers ────────────────────────────────────────────── */
@@ -72,6 +79,11 @@ export default function InstructorDashboard() {
   const [newLessonUrl, setNewLessonUrl] = useState('');
   const [newLessonDuration, setNewLessonDuration] = useState('');
 
+  const [addingSessionTo, setAddingSessionTo] = useState<string | null>(null); // courseId
+  const [newSessionTitle, setNewSessionTitle] = useState('');
+  const [newSessionDate, setNewSessionDate] = useState('');
+  const [newSessionTime, setNewSessionTime] = useState('');
+
   /* ── Fetch courses ─────────────────────────────────────── */
   const fetchCourses = async () => {
     try {
@@ -81,7 +93,18 @@ export default function InstructorDashboard() {
       });
       if (!res.ok) throw new Error(`Error ${res.status}`);
       const data = await res.json();
-      setCourses(Array.isArray(data) ? data : []);
+      
+      const coursesWithSessions = await Promise.all(
+        (Array.isArray(data) ? data : []).map(async (c: any) => {
+          const sRes = await fetch(`${API}/live-sessions?courseId=${c.id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const sessions = sRes.ok ? await sRes.json() : [];
+          return { ...c, liveSessions: sessions };
+        })
+      );
+      
+      setCourses(coursesWithSessions);
     } catch (e) {
       setCoursesError(e instanceof Error ? e.message : 'Failed to load courses');
     } finally {
@@ -255,6 +278,62 @@ export default function InstructorDashboard() {
             : c,
         ),
       );
+    }
+  };
+
+  /* ── Add Live Session ──────────────────────────────────── */
+  const handleAddLiveSession = async (courseId: string) => {
+    if (!newSessionTitle.trim()) {
+      alert('Please provide a title for the Live Session.');
+      return;
+    }
+    if (!newSessionDate || !newSessionTime) {
+      alert('Please select both a date and a time for the Live Session.');
+      return;
+    }
+    const startDate = new Date(`${newSessionDate}T${newSessionTime}`);
+    if (isNaN(startDate.getTime())) {
+      alert('Invalid date selected.');
+      return;
+    }
+
+    const res = await fetch(`${API}/live-sessions`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        courseId,
+        title: newSessionTitle,
+        startTime: startDate.toISOString(),
+      })
+    });
+    if (res.ok) {
+      const session = await res.json();
+      setCourses(prev => prev.map(c => 
+        c.id === courseId 
+          ? { ...c, liveSessions: [...(c.liveSessions || []), session] } 
+          : c
+      ));
+      setAddingSessionTo(null);
+      setNewSessionTitle('');
+      setNewSessionDate('');
+      setNewSessionTime('');
+      alert('Live session scheduled successfully! 🎉');
+    }
+  };
+
+  /* ── Delete Live Session ───────────────────────────────── */
+  const handleDeleteLiveSession = async (courseId: string, sessionId: string) => {
+    if (!confirm('Delete this live session?')) return;
+    const res = await fetch(`${API}/live-sessions/${sessionId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) {
+      setCourses(prev => prev.map(c => 
+        c.id === courseId 
+          ? { ...c, liveSessions: (c.liveSessions || []).filter(s => s.id !== sessionId) }
+          : c
+      ));
     }
   };
 
@@ -571,6 +650,86 @@ export default function InstructorDashboard() {
                               <Plus size={14} /> Add Module
                             </button>
                           )}
+
+                          {/* Live Sessions Section */}
+                          <div className="mt-8 pt-6 border-t border-neutral-800">
+                            <h4 className="text-sm font-semibold text-white mb-4">Live Sessions</h4>
+                            
+                            <div className="space-y-3 mb-4">
+                              {(!course.liveSessions || course.liveSessions.length === 0) && (
+                                <p className="text-xs text-neutral-500">No live sessions scheduled.</p>
+                              )}
+                              
+                              {course.liveSessions?.map(session => (
+                                <div key={session.id} className="flex flex-col gap-1 p-3 bg-neutral-800/50 border border-neutral-700 rounded-lg">
+                                  <div className="flex justify-between items-start">
+                                    <h5 className="font-medium text-sm text-white">{session.title}</h5>
+                                    <div className="flex gap-2">
+                                      <a href={`/dashboard/live/${session.id}`} className="text-xs bg-blue-600/20 text-blue-400 px-2 py-1 rounded hover:bg-blue-600/40">
+                                        Host
+                                      </a>
+                                      <button onClick={() => void handleDeleteLiveSession(course.id, session.id)} className="text-neutral-500 hover:text-red-400">
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                  <p className="text-xs text-neutral-400">{new Date(session.startTime).toLocaleString()}</p>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Add Live Session inline */}
+                            {addingSessionTo === course.id ? (
+                              <div className="p-3 border border-neutral-800 rounded-lg space-y-3 bg-neutral-900/50">
+                                <input
+                                  placeholder="Session Title *"
+                                  className="w-full bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm"
+                                  value={newSessionTitle}
+                                  onChange={(e) => setNewSessionTitle(e.target.value)}
+                                />
+                                <div className="flex gap-2">
+                                  <input
+                                    type="date"
+                                    className="flex-1 bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm"
+                                    value={newSessionDate}
+                                    onChange={(e) => setNewSessionDate(e.target.value)}
+                                  />
+                                  <input
+                                    type="time"
+                                    className="flex-1 bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm"
+                                    value={newSessionTime}
+                                    onChange={(e) => setNewSessionTime(e.target.value)}
+                                  />
+                                </div>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => void handleAddLiveSession(course.id)}
+                                    className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded"
+                                  >
+                                    Save Session
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setAddingSessionTo(null);
+                                      setNewSessionTitle('');
+                                      setNewSessionDate('');
+                                      setNewSessionTime('');
+                                    }}
+                                    className="text-sm bg-neutral-700 text-white px-4 py-1.5 rounded"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setAddingSessionTo(course.id)}
+                                className="flex items-center gap-1 text-sm text-neutral-500 hover:text-blue-400 transition-colors"
+                              >
+                                <Plus size={14} /> Schedule Live Session
+                              </button>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>

@@ -90,7 +90,6 @@ model LiveSession {
   courseId      String
   title         String
   startTime     DateTime
-  zoomMeetingId String?
   course        Course   @relation(fields: [courseId], references: [id])
 }
 

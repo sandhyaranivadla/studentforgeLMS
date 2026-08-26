@@ -7,6 +7,8 @@ import { CoursesModule } from './courses/courses.module';
 import { EnrollmentsModule } from './enrollments/enrollments.module';
 import { ProgressModule } from './progress/progress.module';
 import { UsersModule } from './users/users.module';
+import { LiveSessionsModule } from './live-sessions/live-sessions.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { UsersModule } from './users/users.module';
     EnrollmentsModule,
     ProgressModule,
     UsersModule,
+    LiveSessionsModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [AppService],

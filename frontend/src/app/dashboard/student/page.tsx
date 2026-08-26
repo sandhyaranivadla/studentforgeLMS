@@ -17,12 +17,19 @@ interface CourseInstructor {
   name: string | null;
 }
 
+interface LiveSession {
+  id: string;
+  title: string;
+  startTime: string;
+}
+
 interface Course {
   id: string;
   title: string;
   description: string;
   thumbnail: string | null;
   instructor: CourseInstructor;
+  liveSessions?: LiveSession[];
 }
 
 interface Enrollment {
@@ -326,6 +333,24 @@ function CourseCard({
                 ? 'Start Learning'
                 : 'Continue Learning'}
           </Link>
+          
+          {enrollment.course?.liveSessions && enrollment.course.liveSessions.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-neutral-800">
+              <h4 className="text-xs text-neutral-400 mb-2 uppercase tracking-wider font-semibold">Upcoming Live Sessions</h4>
+              <div className="space-y-2">
+                {enrollment.course.liveSessions.map(session => (
+                  <Link
+                    key={session.id}
+                    href={`/dashboard/live/${session.id}`}
+                    className="flex flex-col gap-1 w-full text-left bg-blue-900/20 hover:bg-blue-900/40 border border-blue-500/20 rounded-lg p-2 transition-colors"
+                  >
+                    <span className="text-sm font-medium text-blue-400 line-clamp-1">{session.title}</span>
+                    <span className="text-xs text-blue-300/70">{new Date(session.startTime).toLocaleString()}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
