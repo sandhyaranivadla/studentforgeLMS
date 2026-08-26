@@ -103,19 +103,8 @@ model LiveSession {
   title         String
   description   String?
   startTime     DateTime
-  endTime       DateTime?
-  status        LiveSessionStatus   @default(SCHEDULED)
   zoomMeetingId String?
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt @default(now())
-  
-  course        Course              @relation(fields: [courseId], references: [id])
-  module        CourseModule?       @relation(fields: [moduleId], references: [id])
-  
-  @@index([courseId])
-  @@index([moduleId])
-  @@index([startTime])
-  @@index([status])
+  course        Course   @relation(fields: [courseId], references: [id])
 }
 
 model Message {

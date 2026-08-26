@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoom Meeting</title>
+    <!-- React 18 (Required by Zoom SDK) -->
+    <script src="https://source.zoom.us/3.8.0/lib/vendor/react.min.js"></script>
+    <script src="https://source.zoom.us/3.8.0/lib/vendor/react-dom.min.js"></script>
+    <script src="https://source.zoom.us/3.8.0/lib/vendor/redux.min.js"></script>
+    <script src="https://source.zoom.us/3.8.0/lib/vendor/redux-thunk.min.js"></script>
+    <script src="https://source.zoom.us/3.8.0/lib/vendor/lodash.min.js"></script>
+
+    <!-- Zoom Meeting SDK -->
+    <script src="https://source.zoom.us/zoom-meeting-3.8.0.min.js"></script>
+    
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
+        #zoom-container { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+    <div id="zoom-container"></div>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const meetingNumber = urlParams.get('meetingNumber');
+        const signature = urlParams.get('signature');
+        const userName = urlParams.get('userName') || 'User';
+        const userEmail = urlParams.get('userEmail') || '';
+        const passWord = urlParams.get('passWord') || '';
+        const sdkKey = urlParams.get('sdkKey') || '';
+
+        if (meetingNumber && signature && sdkKey) {
+            ZoomMtg.setZoomJSLib('https://source.zoom.us/3.8.0/lib', '/av');
+            ZoomMtg.preLoadWasm();
+            ZoomMtg.prepareWebSDK();
+
+            ZoomMtg.init({
+                leaveUrl: window.location.origin + '/zoom-leave',
+                success: function () {
+                    ZoomMtg.join({
+                        signature: signature,
+                        meetingNumber: meetingNumber,
+                        userName: userName,
+                        sdkKey: sdkKey,
+                        userEmail: userEmail,
+                        passWord: passWord,
+                        success: function (res) {
+                            console.log('join meeting success');
+                        },
+                        error: function (res) {
+                            console.error(res);
+                        }
+                    });
+                },
+                error: function (res) {
+                    console.error(res);
+                }
+            });
+        } else {
+            document.body.innerHTML = '<div style="color:red; padding:20px; font-family:sans-serif;">Missing required Zoom parameters.</div>';
+        }
+    </script>
+</body>
+</html>

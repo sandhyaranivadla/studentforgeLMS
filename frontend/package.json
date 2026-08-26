@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@jitsi/react-sdk": "^1.4.4",
     "axios": "^1.19.0",
     "js-cookie": "^3.0.8",
     "jwt-decode": "^4.0.0",

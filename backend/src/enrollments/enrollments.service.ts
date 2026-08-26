@@ -103,7 +103,7 @@ export class EnrollmentsService {
     if (userRole === Role.STUDENT) {
       return this.prisma.enrollment.findMany({
         where: { studentId: userId },
-        include: { course: true },
+        include: { course: { include: { liveSessions: true } } },
       });
     } else if (userRole === Role.INSTRUCTOR) {
       // Instructors might see enrollments for their own courses
@@ -111,14 +111,14 @@ export class EnrollmentsService {
         where: { course: { instructorId: userId } },
         include: {
           student: { select: { name: true, email: true } },
-          course: true,
+          course: { include: { liveSessions: true } },
         },
       });
     } else {
       return this.prisma.enrollment.findMany({
         include: {
           student: { select: { name: true, email: true } },
-          course: true,
+          course: { include: { liveSessions: true } },
         },
       });
     }
