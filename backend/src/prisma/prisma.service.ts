@@ -21,7 +21,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       if (match && match[1]) {
         try {
           ssl = {
-            rejectUnauthorized: true,
+            rejectUnauthorized: false,
             ca: fs.readFileSync(match[1]).toString(),
           };
         } catch {

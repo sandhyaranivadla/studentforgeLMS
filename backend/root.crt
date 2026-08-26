@@ -1,0 +1,169 @@
+<!doctype html><!--[if lt IE 7]> <html lang="en" class="ie6" > <![endif]--><!--[if IE 7]>    <html lang="en" class="ie7" > <![endif]--><!--[if IE 8]>    <html lang="en" class="ie8" > <![endif]--><!--[if IE 9]>    <html lang="en" class="ie9" > <![endif]--><!--[if (gt IE 9)|!(IE)]><!--><html lang="en" class=""><!--<![endif]--><head><meta charset="utf-8"/><title>CockroachDB Cloud</title><link rel="shortcut icon" href="/assets/favicon.ico"/><script>// Add a script element to the dom
+      function loadScript(script) {
+        document.head.appendChild(script);
+      }</script><script>var host = window.location.host;
+
+      window.loadCookieConsent = !window.Cypress;
+
+      if (window.loadCookieConsent) {
+
+        var isTestEnv = host === "management-staging.crdb.io" ||
+          host === "management-preprod.crdb.io" ||
+          host === "localhost:7900" ||
+          host === "localhost:8081";
+
+        var consentScriptTemplateId = '019b8eea-4d8d-7ce4-9c1f-dd840736b79f';
+        if (isTestEnv) {
+          consentScriptTemplateId += '-test';
+        }
+
+        var script = document.createElement('script');
+        script.src = `https://cdn.cookielaw.org/consent/${consentScriptTemplateId}/otSDKStub.js`;
+        script.type = 'text/javascript';
+        script.charset = 'UTF-8';
+        script.setAttribute('data-language', "en");
+        script.setAttribute('data-domain-script', consentScriptTemplateId);
+
+        loadScript(script);
+
+        // OptanonWrapper can be used to conditionally load scripts or execute
+        // javascript depending on the consent categories that were chosen.
+        // It is executed by OneTrust on each page load and whenever the user
+        // modifies their consent in the Preference Center. Per OneTrust
+        // docs, opt-out actions (Active to Inactive) only reflect on page refresh,
+        // so we reload the page to immediately apply consent changes.
+        // However, we skip reload for: (1) the initial call on page load to avoid
+        // infinite loops, and (2) when new users make their initial selection since
+        // Segment already waits for consent before loading.
+        // See https://my.onetrust.com/s/article/UUID-518074a1-a6da-81c3-be52-bae7685d9c94?language=en_US#idm2935
+        let isFirstCall = true;
+        let shouldReloadOnNextCall = false;
+        window.OptanonWrapper = () => {
+          if (isFirstCall) {
+            // First call on page load - check if user already made a selection previously.
+            // If yes (returning user), we'll reload on their next preference change.
+            // If no (new user), we'll skip reload on their initial selection.
+            shouldReloadOnNextCall = window.OneTrust?.IsAlertBoxClosed();
+            isFirstCall = false;
+          } else {
+            // Subsequent calls triggered by user changing preferences
+            if (shouldReloadOnNextCall) {
+              // Either a returning user or a new user changing after initial selection - reload
+              window.location.reload();
+            } else {
+              // New user making initial selection - skip reload but enable it for future changes
+              shouldReloadOnNextCall = true;
+            }
+          }
+        }
+      }</script><script defer="defer" src="/assets/common.f4715fa5daf11b4fd6ad.js"></script><script defer="defer" src="/assets/application.92e7ec47c64cb6f57cc7.js"></script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="preload" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600&display=swap" as="style" onload="this.rel='stylesheet'"><link href="/assets/application.4c04854eaa2c801bae0c.css" rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'"/><script src="https://cdn.jsdelivr.net/npm/@segment/analytics-consent-wrapper-onetrust@1.1.3/dist/umd/analytics-onetrust.umd.js" integrity="sha384-ZfcsAx1x7muBdnigLXYDf60HLhesYq26ml8RlUC8nybmvoJ3z9AujMUd8yos84Fv" crossorigin="anonymous"></script><script>(function(){
+        // Create a queue, but don't obliterate an existing one!
+        var analytics = window.analytics = window.analytics || [];
+
+        // If the real analytics.js is already on the page return.
+        if (analytics.initialize) return;
+
+        // If the snippet was invoked already show an error.
+        if (analytics.invoked) {
+          if (window.console && console.error) {
+            console.error('Segment snippet included twice.');
+          }
+          return;
+        }
+
+        // Invoked flag, to make sure the snippet
+        // is never invoked twice.
+        analytics.invoked = true;
+
+        // A list of the methods in Analytics.js to stub.
+        analytics.methods = [
+          'trackSubmit',
+          'trackClick',
+          'trackLink',
+          'trackForm',
+          'pageview',
+          'identify',
+          'reset',
+          'group',
+          'track',
+          'ready',
+          'alias',
+          'debug',
+          'page',
+          'once',
+          'off',
+          'on',
+          'addSourceMiddleware',
+          'addIntegrationMiddleware',
+          'setAnonymousId',
+          'addDestinationMiddleware',
+        ];
+
+        // Define a factory to create stubs. These are placeholders
+        // for methods in Analytics.js so that you never have to wait
+        // for it to load to actually record data. The `method` is
+        // stored as the first argument, so we can replay the data.
+        analytics.factory = function(method){
+          return function(){
+            var args = Array.prototype.slice.call(arguments);
+            args.unshift(method);
+            analytics.push(args);
+            return analytics;
+          };
+        };
+
+        // For each of our methods, generate a queueing stub.
+        for (var i = 0; i < analytics.methods.length; i++) {
+          var key = analytics.methods[i];
+          analytics[key] = analytics.factory(key);
+        }
+
+        // Define a method to load Analytics.js from our CDN,
+        // and that will be sure to only ever load it once.
+        analytics.load = function(settings, options){
+          // Create an async script element based on your key.
+          var script = document.createElement('script');
+          script.type = 'text/javascript';
+          script.async = true;
+          // This is the only thing modified from the provided snippet:
+          // https://segment.com/docs/connections/sources/catalog/libraries/website/javascript/quickstart/#step-1-copy-the-snippet
+          var host = window.location.host;
+          if (host.split(":")[0] !== "localhost") {
+               var consoleHost = host;
+              // The segment script is only available on CC console domain.
+              // So if host is SU, then update the host to corresponding console host.
+              if(host === "superuser-management-staging.crdb.io") {
+                consoleHost = "management-staging.crdb.io"
+              } else if (host === "su.cockroachlabs.cloud") {
+                consoleHost = "cockroachlabs.cloud"
+              }
+
+            script.src = `https://marketing.${consoleHost}/segment/load`;
+          } else {
+            
+            script.src = 'http://localhost:7909/segment/load';
+            
+          }
+
+          loadScript(script)
+          analytics._loadOptions = options;
+        };
+
+        // Add a version to keep track of what's in the wild.
+        analytics.SNIPPET_VERSION = '4.15.3';
+
+        // Load Segment.
+        if (!window.Cypress) {
+          if (window.loadCookieConsent) {
+            if (window['withOneTrust']) {
+              withOneTrust(analytics).load()
+            } else {
+              console.error("expecting withOneTrust to be defined, but it wasn't, falling back to normal analytics")
+              analytics.load()
+            }
+          }
+          else {
+            analytics.load()
+          }
+        }
+      })();</script></head><body><div id="app"></div><iframe id="instrumentation-tunnel" style="display: none;" width="0" height="0" tabindex="-1" aria-hidden="true" sandbox="allow-scripts allow-same-origin" src="https://www.cockroachlabs.com/instrumentation/tunnel.html"/></body></html>
