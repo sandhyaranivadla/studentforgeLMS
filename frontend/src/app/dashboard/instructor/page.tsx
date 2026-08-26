@@ -891,28 +891,63 @@ export default function InstructorDashboard() {
                             )}
 
                             {/* Assignments Section */}
-                            <div style={{ borderTop: '1px solid rgba(107, 114, 128, 0.3)', paddingTop: '1rem', marginTop: '1rem' }}>
-                              <AssignmentList courseId={course.id} token={token} />
+                            <div style={{ marginTop: '1rem' }}>
+                              <OperunCard>
+                                <OperunCardHeader>
+                                  <OperunCardTitle>Assignments</OperunCardTitle>
+                                </OperunCardHeader>
+                                <OperunCardBody>
+                                  <AssignmentList courseId={course.id} token={token} />
+                                </OperunCardBody>
+                              </OperunCard>
                             </div>
 
                             {/* Quizzes Section */}
-                            <div style={{ borderTop: '1px solid rgba(107, 114, 128, 0.3)', paddingTop: '1rem', marginTop: '1rem' }}>
-                              <QuizList courseId={course.id} token={token} />
+                            <div style={{ marginTop: '1rem' }}>
+                              <OperunCard>
+                                <OperunCardHeader>
+                                  <OperunCardTitle>Quizzes</OperunCardTitle>
+                                </OperunCardHeader>
+                                <OperunCardBody>
+                                  <QuizList courseId={course.id} token={token} />
+                                </OperunCardBody>
+                              </OperunCard>
                             </div>
 
                             {/* Live Classes Section */}
-                            <div style={{ borderTop: '1px solid rgba(107, 114, 128, 0.3)', paddingTop: '1rem', marginTop: '1rem' }}>
-                              <LiveClassList courseId={course.id} token={token} />
+                            <div style={{ marginTop: '1rem' }}>
+                              <OperunCard>
+                                <OperunCardHeader>
+                                  <OperunCardTitle>Live Classes</OperunCardTitle>
+                                </OperunCardHeader>
+                                <OperunCardBody>
+                                  <LiveClassList courseId={course.id} token={token} />
+                                </OperunCardBody>
+                              </OperunCard>
                             </div>
 
                             {/* Announcements Section */}
-                            <div style={{ borderTop: '1px solid rgba(107, 114, 128, 0.3)', paddingTop: '1rem', marginTop: '1rem' }}>
-                              <AnnouncementList courseId={course.id} token={token} />
+                            <div style={{ marginTop: '1rem' }}>
+                              <OperunCard>
+                                <OperunCardHeader>
+                                  <OperunCardTitle>Announcements</OperunCardTitle>
+                                </OperunCardHeader>
+                                <OperunCardBody>
+                                  <AnnouncementList courseId={course.id} token={token} />
+                                </OperunCardBody>
+                              </OperunCard>
                             </div>
 
                             {/* Analytics Section */}
-                            <div style={{ borderTop: '1px solid rgba(107, 114, 128, 0.3)', paddingTop: '1rem', marginTop: '1rem' }}>
-                              <AnalyticsDashboard courseId={course.id} token={token} />
+                            <div style={{ marginTop: '1rem' }}>
+                              <OperunCard>
+                                <OperunCardHeader>
+                                  <OperunCardTitle>Analytics</OperunCardTitle>
+                                </OperunCardHeader>
+                                <OperunCardBody>
+                                  <AnalyticsDashboard courseId={course.id} token={token} />
+                                </OperunCardBody>
+                              </OperunCard>
                             </div>
 
                             {/* Live Sessions Section */}
