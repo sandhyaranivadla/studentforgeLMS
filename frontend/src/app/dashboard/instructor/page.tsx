@@ -68,6 +68,12 @@ export default function InstructorDashboard() {
   const [editDesc, setEditDesc] = useState('');
   const [editPrice, setEditPrice] = useState('');
 
+  /* Create new course */
+  const [isCreating, setIsCreating] = useState(false);
+  const [newCourseTitle, setNewCourseTitle] = useState('');
+  const [newCourseDesc, setNewCourseDesc] = useState('');
+  const [newCoursePrice, setNewCoursePrice] = useState('');
+
   /* Add module */
   const [addingModuleTo, setAddingModuleTo] = useState<string | null>(null);
   const [newModuleTitle, setNewModuleTitle] = useState('');
@@ -135,6 +141,32 @@ export default function InstructorDashboard() {
       setCourses((prev) =>
         prev.map((c) => (c.id === course.id ? { ...c, published: !course.published } : c)),
       );
+    }
+  };
+
+  /* ── Create new course ─────────────────────────────────── */
+  const handleCreateCourse = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCourseTitle.trim() || !newCourseDesc.trim()) return;
+
+    const res = await fetch(`${API}/courses`, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({
+        title: newCourseTitle,
+        description: newCourseDesc,
+        price: parseFloat(newCoursePrice) || 0,
+      }),
+    });
+    
+    if (res.ok) {
+      const newCourse = await res.json();
+      // Backend returns the newly created course, but without modules array which our frontend expects
+      setCourses((prev) => [...prev, { ...newCourse, modules: [] }]);
+      setIsCreating(false);
+      setNewCourseTitle('');
+      setNewCourseDesc('');
+      setNewCoursePrice('');
     }
   };
 
@@ -369,7 +401,57 @@ export default function InstructorDashboard() {
         {/* Course list */ }
         <div className="md:col-span-1">
           <div className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Your Courses</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-white">Your Courses</h2>
+              <button
+                onClick={() => setIsCreating(true)}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                <Plus size={16} /> Create Course
+              </button>
+            </div>
+
+            {isCreating && (
+              <form onSubmit={handleCreateCourse} className="mb-6 bg-neutral-900 border border-neutral-800 p-4 rounded-xl space-y-4">
+                <h3 className="text-sm font-semibold text-white mb-2">Create New Course</h3>
+                <div>
+                  <input
+                    className="w-full bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm"
+                    placeholder="Course Title"
+                    value={newCourseTitle}
+                    onChange={(e) => setNewCourseTitle(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <textarea
+                    rows={3}
+                    className="w-full bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm resize-none"
+                    placeholder="Course Description"
+                    value={newCourseDesc}
+                    onChange={(e) => setNewCourseDesc(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <input
+                    type="number"
+                    className="w-32 bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm"
+                    placeholder="Price ($)"
+                    value={newCoursePrice}
+                    onChange={(e) => setNewCoursePrice(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium">
+                    Save Course
+                  </button>
+                  <button type="button" onClick={() => setIsCreating(false)} className="bg-neutral-700 hover:bg-neutral-600 text-white px-4 py-2 rounded text-sm font-medium">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            )}
 
             {loadingCourses && (
               <div className="space-y-3">
