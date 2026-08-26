@@ -420,6 +420,59 @@ export default function InstructorDashboard() {
             </OperunCard>
           </div>
 
+          {/* 5 Instructor Feature Sections */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+            {/* Assignments Section */}
+            <OperunCard>
+              <OperunCardHeader>
+                <OperunCardTitle>Assignments</OperunCardTitle>
+              </OperunCardHeader>
+              <OperunCardBody>
+                <AssignmentList courseId={courses[0]?.id || ''} token={token} />
+              </OperunCardBody>
+            </OperunCard>
+
+            {/* Quizzes Section */}
+            <OperunCard>
+              <OperunCardHeader>
+                <OperunCardTitle>Quizzes</OperunCardTitle>
+              </OperunCardHeader>
+              <OperunCardBody>
+                <QuizList courseId={courses[0]?.id || ''} token={token} />
+              </OperunCardBody>
+            </OperunCard>
+
+            {/* Live Classes Section */}
+            <OperunCard>
+              <OperunCardHeader>
+                <OperunCardTitle>Live Classes</OperunCardTitle>
+              </OperunCardHeader>
+              <OperunCardBody>
+                <LiveClassList courseId={courses[0]?.id || ''} token={token} />
+              </OperunCardBody>
+            </OperunCard>
+
+            {/* Announcements Section */}
+            <OperunCard>
+              <OperunCardHeader>
+                <OperunCardTitle>Announcements</OperunCardTitle>
+              </OperunCardHeader>
+              <OperunCardBody>
+                <AnnouncementList courseId={courses[0]?.id || ''} token={token} />
+              </OperunCardBody>
+            </OperunCard>
+
+            {/* Analytics Section */}
+            <OperunCard>
+              <OperunCardHeader>
+                <OperunCardTitle>Analytics</OperunCardTitle>
+              </OperunCardHeader>
+              <OperunCardBody>
+                <AnalyticsDashboard courseId={courses[0]?.id || ''} token={token} />
+              </OperunCardBody>
+            </OperunCard>
+          </div>
+
           {/* Courses Section */}
           <OperunCard>
             <OperunCardHeader>
@@ -889,66 +942,6 @@ export default function InstructorDashboard() {
                                 <Plus size={14} /> Add Module
                               </button>
                             )}
-
-                            {/* Assignments Section */}
-                            <div style={{ marginTop: '1rem' }}>
-                              <OperunCard>
-                                <OperunCardHeader>
-                                  <OperunCardTitle>Assignments</OperunCardTitle>
-                                </OperunCardHeader>
-                                <OperunCardBody>
-                                  <AssignmentList courseId={course.id} token={token} />
-                                </OperunCardBody>
-                              </OperunCard>
-                            </div>
-
-                            {/* Quizzes Section */}
-                            <div style={{ marginTop: '1rem' }}>
-                              <OperunCard>
-                                <OperunCardHeader>
-                                  <OperunCardTitle>Quizzes</OperunCardTitle>
-                                </OperunCardHeader>
-                                <OperunCardBody>
-                                  <QuizList courseId={course.id} token={token} />
-                                </OperunCardBody>
-                              </OperunCard>
-                            </div>
-
-                            {/* Live Classes Section */}
-                            <div style={{ marginTop: '1rem' }}>
-                              <OperunCard>
-                                <OperunCardHeader>
-                                  <OperunCardTitle>Live Classes</OperunCardTitle>
-                                </OperunCardHeader>
-                                <OperunCardBody>
-                                  <LiveClassList courseId={course.id} token={token} />
-                                </OperunCardBody>
-                              </OperunCard>
-                            </div>
-
-                            {/* Announcements Section */}
-                            <div style={{ marginTop: '1rem' }}>
-                              <OperunCard>
-                                <OperunCardHeader>
-                                  <OperunCardTitle>Announcements</OperunCardTitle>
-                                </OperunCardHeader>
-                                <OperunCardBody>
-                                  <AnnouncementList courseId={course.id} token={token} />
-                                </OperunCardBody>
-                              </OperunCard>
-                            </div>
-
-                            {/* Analytics Section */}
-                            <div style={{ marginTop: '1rem' }}>
-                              <OperunCard>
-                                <OperunCardHeader>
-                                  <OperunCardTitle>Analytics</OperunCardTitle>
-                                </OperunCardHeader>
-                                <OperunCardBody>
-                                  <AnalyticsDashboard courseId={course.id} token={token} />
-                                </OperunCardBody>
-                              </OperunCard>
-                            </div>
 
                             {/* Live Sessions Section */}
                             <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(107, 114, 128, 0.5)' }}>
