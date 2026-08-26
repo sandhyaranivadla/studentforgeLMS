@@ -13,6 +13,13 @@ import {
   CheckCircle,
   EyeOff,
 } from 'lucide-react';
+import { OperunCard, OperunCardHeader, OperunCardTitle, OperunCardBody, OperunInput, OperunButton, OperunAlert } from '@/components/ui';
+import { OperunContainer, OperunMain } from '@/components/layout';
+import AssignmentList from './components/AssignmentList';
+import QuizList from './components/QuizList';
+import LiveClassList from './components/LiveClassList';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
+import AnnouncementList from './components/AnnouncementList';
 
 /* ─── Types ─────────────────────────────────────────────── */
 interface Lesson {
@@ -371,457 +378,681 @@ export default function InstructorDashboard() {
 
   /* ── Render ─────────────────────────────────────────────── */
   return (
-    <div className="space-y-8">
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-neutral-900/50 border border-neutral-800 p-6 rounded-2xl hover:border-blue-500/50 transition-colors">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-neutral-400 text-sm font-medium">Total Courses</h3>
-            <BookOpen className="text-blue-500 h-5 w-5" />
+    <OperunMain>
+      <OperunContainer maxWidth="lg">
+        <div style={{ paddingTop: '2rem', paddingBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          {/* Stats Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+            <OperunCard>
+              <OperunCardBody>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                  <h3 style={{ color: '#9ca3af', fontSize: '0.875rem', fontWeight: 500, margin: 0 }}>Total Courses</h3>
+                  <BookOpen style={{ color: '#0ea5e9', width: '20px', height: '20px' }} />
+                </div>
+                <p style={{ fontSize: '1.875rem', fontWeight: 'bold', margin: 0, color: '#ffffff' }}>
+                  {loadingCourses ? '—' : courses.length}
+                </p>
+              </OperunCardBody>
+            </OperunCard>
+
+            <OperunCard>
+              <OperunCardBody>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                  <h3 style={{ color: '#9ca3af', fontSize: '0.875rem', fontWeight: 500, margin: 0 }}>Published</h3>
+                  <CheckCircle style={{ color: '#10b981', width: '20px', height: '20px' }} />
+                </div>
+                <p style={{ fontSize: '1.875rem', fontWeight: 'bold', margin: 0, color: '#ffffff' }}>
+                  {loadingCourses ? '—' : courses.filter((c) => c.published).length}
+                </p>
+              </OperunCardBody>
+            </OperunCard>
+
+            <OperunCard>
+              <OperunCardBody>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                  <h3 style={{ color: '#9ca3af', fontSize: '0.875rem', fontWeight: 500, margin: 0 }}>Drafts</h3>
+                  <EyeOff style={{ color: '#eab308', width: '20px', height: '20px' }} />
+                </div>
+                <p style={{ fontSize: '1.875rem', fontWeight: 'bold', margin: 0, color: '#ffffff' }}>
+                  {loadingCourses ? '—' : courses.filter((c) => !c.published).length}
+                </p>
+              </OperunCardBody>
+            </OperunCard>
           </div>
-          <p className="text-3xl font-bold">{loadingCourses ? '—' : courses.length}</p>
-        </div>
-        <div className="bg-neutral-900/50 border border-neutral-800 p-6 rounded-2xl hover:border-emerald-500/50 transition-colors">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-neutral-400 text-sm font-medium">Published</h3>
-            <CheckCircle className="text-emerald-500 h-5 w-5" />
-          </div>
-          <p className="text-3xl font-bold">{loadingCourses ? '—' : courses.filter((c) => c.published).length}</p>
-        </div>
-        <div className="bg-neutral-900/50 border border-neutral-800 p-6 rounded-2xl hover:border-yellow-500/50 transition-colors">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-neutral-400 text-sm font-medium">Drafts</h3>
-            <EyeOff className="text-yellow-500 h-5 w-5" />
-          </div>
-          <p className="text-3xl font-bold">{loadingCourses ? '—' : courses.filter((c) => !c.published).length}</p>
-        </div>
-      </div>
 
-      <div className="grid md:grid-cols-1 gap-8">
-        {/* Course list */ }
-        <div className="md:col-span-1">
-          <div className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-white">Your Courses</h2>
-              <button
-                onClick={() => setIsCreating(true)}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                <Plus size={16} /> Create Course
-              </button>
-            </div>
-
-            {isCreating && (
-              <form onSubmit={handleCreateCourse} className="mb-6 bg-neutral-900 border border-neutral-800 p-4 rounded-xl space-y-4">
-                <h3 className="text-sm font-semibold text-white mb-2">Create New Course</h3>
-                <div>
-                  <input
-                    className="w-full bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm"
-                    placeholder="Course Title"
-                    value={newCourseTitle}
-                    onChange={(e) => setNewCourseTitle(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <textarea
-                    rows={3}
-                    className="w-full bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm resize-none"
-                    placeholder="Course Description"
-                    value={newCourseDesc}
-                    onChange={(e) => setNewCourseDesc(e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
-                  <input
-                    type="number"
-                    className="w-32 bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm"
-                    placeholder="Price ($)"
-                    value={newCoursePrice}
-                    onChange={(e) => setNewCoursePrice(e.target.value)}
-                  />
-                </div>
-                <div className="flex gap-2 pt-2">
-                  <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium">
-                    Save Course
-                  </button>
-                  <button type="button" onClick={() => setIsCreating(false)} className="bg-neutral-700 hover:bg-neutral-600 text-white px-4 py-2 rounded text-sm font-medium">
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {loadingCourses && (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-16 bg-neutral-800 rounded-xl animate-pulse" />
-                ))}
+          {/* Courses Section */}
+          <OperunCard>
+            <OperunCardHeader>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <OperunCardTitle>Your Courses</OperunCardTitle>
+                <OperunButton
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setIsCreating(true)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <Plus size={16} /> Create Course
+                </OperunButton>
               </div>
-            )}
+            </OperunCardHeader>
 
-            {!loadingCourses && coursesError && (
-              <div className="flex items-center gap-2 text-red-400 bg-red-900/20 border border-red-500/30 rounded-xl p-4 text-sm">
-                <AlertCircle size={16} />
-                {coursesError}
-              </div>
-            )}
+            <OperunCardBody>
+              {/* Create Course Form */}
+              {isCreating && (
+                <div style={{ marginBottom: '1.5rem', background: 'rgba(15, 23, 42, 0.5)', border: '1px solid rgba(107, 114, 128, 0.5)', borderRadius: '0.75rem', overflow: 'hidden' }}>
+                  <div style={{ padding: '1rem' }}>
+                    <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#ffffff', marginBottom: '1rem', margin: 0 }}>Create New Course</h3>
+                    <form onSubmit={handleCreateCourse} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <OperunInput
+                        label="Course Title"
+                        placeholder="Enter course title"
+                        value={newCourseTitle}
+                        onChange={(e) => setNewCourseTitle(e.target.value)}
+                        required
+                        fullWidth
+                      />
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#d1d5db', marginBottom: '0.5rem' }}>
+                          Description
+                        </label>
+                        <textarea
+                          style={{
+                            width: '100%',
+                            padding: '0.5rem',
+                            background: 'rgba(31, 41, 55, 0.8)',
+                            border: '1px solid rgba(107, 114, 128, 0.5)',
+                            borderRadius: '0.375rem',
+                            color: '#ffffff',
+                            fontSize: '0.875rem',
+                            fontFamily: 'inherit',
+                            minHeight: '100px',
+                            resize: 'none',
+                          }}
+                          placeholder="Enter course description"
+                          value={newCourseDesc}
+                          onChange={(e) => setNewCourseDesc(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <OperunInput
+                        label="Price ($)"
+                        type="number"
+                        placeholder="0.00"
+                        value={newCoursePrice}
+                        onChange={(e) => setNewCoursePrice(e.target.value)}
+                        fullWidth
+                      />
+                      <div style={{ display: 'flex', gap: '0.75rem' }}>
+                        <OperunButton type="submit" variant="primary">Save Course</OperunButton>
+                        <OperunButton type="button" variant="secondary" onClick={() => setIsCreating(false)}>
+                          Cancel
+                        </OperunButton>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
 
-            {!loadingCourses && !coursesError && courses.length === 0 && (
-              <div className="text-center py-10 text-neutral-500 text-sm">
-                No courses assigned yet. Check back later or contact your admin.
-              </div>
-            )}
+              {/* Loading State */}
+              {loadingCourses && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} style={{ height: '4rem', background: 'rgba(31, 41, 55, 0.5)', borderRadius: '0.75rem', animation: 'pulse 2s infinite' }} />
+                  ))}
+                </div>
+              )}
 
-            {!loadingCourses && courses.length > 0 && (
-              <div className="space-y-4">
-                {courses.map((course) => {
-                  const isExpanded = expandedCourse === course.id;
-                  const isEditing = editingCourse === course.id;
+              {/* Error State */}
+              {!loadingCourses && coursesError && (
+                <OperunAlert variant="error" onClose={() => setCoursesError('')}>
+                  {coursesError}
+                </OperunAlert>
+              )}
 
-                  return (
-                    <div
-                      key={course.id}
-                      className="border border-neutral-800 rounded-xl overflow-hidden bg-neutral-900/30"
-                    >
-                      {/* Course row */}
-                      <div className="flex items-start gap-3 p-4">
-                        <button
-                          onClick={() => setExpandedCourse(isExpanded ? null : course.id)}
-                          className="mt-1 text-neutral-500 hover:text-white transition-colors shrink-0"
-                        >
-                          {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-                        </button>
+              {/* Empty State */}
+              {!loadingCourses && !coursesError && courses.length === 0 && (
+                <p style={{ textAlign: 'center', paddingTop: '2.5rem', paddingBottom: '2.5rem', color: '#6b7280', fontSize: '0.875rem', margin: 0 }}>
+                  No courses assigned yet. Check back later or contact your admin.
+                </p>
+              )}
 
-                        <div className="flex-1 min-w-0">
-                          {isEditing ? (
-                            <div className="space-y-2">
-                              <input
-                                className="w-full bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm"
-                                value={editTitle}
-                                onChange={(e) => setEditTitle(e.target.value)}
-                              />
-                              <textarea
-                                rows={2}
-                                className="w-full bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm resize-none"
-                                value={editDesc}
-                                onChange={(e) => setEditDesc(e.target.value)}
-                              />
-                              <input
-                                type="number"
-                                className="w-24 bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm"
-                                value={editPrice}
-                                onChange={(e) => setEditPrice(e.target.value)}
-                                placeholder="Price"
-                              />
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => void handleSaveEdit(course.id)}
-                                  className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
-                                >
-                                  Save
-                                </button>
-                                <button
-                                  onClick={() => setEditingCourse(null)}
-                                  className="text-xs bg-neutral-700 hover:bg-neutral-600 text-white px-3 py-1 rounded"
-                                >
-                                  Cancel
-                                </button>
+              {/* Courses List */}
+              {!loadingCourses && courses.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {courses.map((course) => {
+                    const isExpanded = expandedCourse === course.id;
+                    const isEditing = editingCourse === course.id;
+
+                    return (
+                      <div
+                        key={course.id}
+                        style={{
+                          border: '1px solid rgba(107, 114, 128, 0.5)',
+                          borderRadius: '0.75rem',
+                          overflow: 'hidden',
+                          background: 'rgba(15, 23, 42, 0.5)',
+                        }}
+                      >
+                        {/* Course Row */}
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '1rem' }}>
+                          <button
+                            onClick={() => setExpandedCourse(isExpanded ? null : course.id)}
+                            style={{
+                              marginTop: '0.25rem',
+                              background: 'none',
+                              border: 'none',
+                              color: '#6b7280',
+                              cursor: 'pointer',
+                              padding: '0.25rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            {isExpanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                          </button>
+
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            {isEditing ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                <OperunInput
+                                  value={editTitle}
+                                  onChange={(e) => setEditTitle(e.target.value)}
+                                  fullWidth
+                                />
+                                <div>
+                                  <textarea
+                                    style={{
+                                      width: '100%',
+                                      padding: '0.5rem',
+                                      background: 'rgba(31, 41, 55, 0.8)',
+                                      border: '1px solid rgba(107, 114, 128, 0.5)',
+                                      borderRadius: '0.375rem',
+                                      color: '#ffffff',
+                                      fontSize: '0.875rem',
+                                      fontFamily: 'inherit',
+                                      minHeight: '80px',
+                                      resize: 'none',
+                                    }}
+                                    value={editDesc}
+                                    onChange={(e) => setEditDesc(e.target.value)}
+                                  />
+                                </div>
+                                <OperunInput
+                                  type="number"
+                                  placeholder="Price"
+                                  value={editPrice}
+                                  onChange={(e) => setEditPrice(e.target.value)}
+                                  fullWidth
+                                />
+                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                  <OperunButton variant="primary" size="sm" onClick={() => void handleSaveEdit(course.id)}>
+                                    Save
+                                  </OperunButton>
+                                  <OperunButton variant="secondary" size="sm" onClick={() => setEditingCourse(null)}>
+                                    Cancel
+                                  </OperunButton>
+                                </div>
                               </div>
+                            ) : (
+                              <>
+                                <h3 style={{ fontWeight: 600, color: '#ffffff', fontSize: '0.875rem', margin: 0, marginBottom: '0.5rem' }}>
+                                  {course.title}
+                                </h3>
+                                <p style={{
+                                  color: '#9ca3af',
+                                  fontSize: '0.75rem',
+                                  margin: 0,
+                                  marginBottom: '0.5rem',
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 1,
+                                  WebkitBoxOrient: 'vertical',
+                                  overflow: 'hidden',
+                                }}>
+                                  {course.description}
+                                </p>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+                                  <span
+                                    style={{
+                                      fontSize: '0.75rem',
+                                      padding: '0.25rem 0.75rem',
+                                      borderRadius: '0.375rem',
+                                      fontWeight: 500,
+                                      background: course.published ? 'rgba(16, 185, 129, 0.2)' : 'rgba(234, 179, 8, 0.2)',
+                                      color: course.published ? '#10b981' : '#eab308',
+                                    }}
+                                  >
+                                    {course.published ? 'Published' : 'Draft'}
+                                  </span>
+                                  <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                                    {course.modules.length} module{course.modules.length !== 1 ? 's' : ''} • {course.price === 0 ? 'Free' : `$${course.price}`}
+                                  </span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                          {!isEditing && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexShrink: 0 }}>
+                              <button
+                                onClick={() => {
+                                  setEditingCourse(course.id);
+                                  setEditTitle(course.title);
+                                  setEditDesc(course.description);
+                                  setEditPrice(String(course.price));
+                                }}
+                                style={{
+                                  padding: '0.375rem',
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#9ca3af',
+                                  cursor: 'pointer',
+                                  borderRadius: '0.375rem',
+                                }}
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                              <button
+                                onClick={() => void handleTogglePublish(course)}
+                                style={{
+                                  padding: '0.375rem',
+                                  background: 'none',
+                                  border: 'none',
+                                  color: course.published ? '#10b981' : '#eab308',
+                                  cursor: 'pointer',
+                                  borderRadius: '0.375rem',
+                                }}
+                              >
+                                {course.published ? <EyeOff size={14} /> : <CheckCircle size={14} />}
+                              </button>
+                              <button
+                                onClick={() => void handleDeleteCourse(course.id)}
+                                style={{
+                                  padding: '0.375rem',
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#6b7280',
+                                  cursor: 'pointer',
+                                  borderRadius: '0.375rem',
+                                }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
                             </div>
-                          ) : (
-                            <>
-                              <h3 className="font-semibold text-white text-sm">{course.title}</h3>
-                              <p className="text-neutral-400 text-xs mt-0.5 line-clamp-1">{course.description}</p>
-                              <div className="flex items-center gap-2 mt-1.5">
-                                <span
-                                  className={`text-xs px-2 py-0.5 rounded font-medium ${
-                                    course.published
-                                      ? 'bg-emerald-900/50 text-emerald-400'
-                                      : 'bg-yellow-900/40 text-yellow-400'
-                                  }`}
-                                >
-                                  {course.published ? 'Published' : 'Draft'}
-                                </span>
-                                <span className="text-xs text-neutral-500">
-                                  {course.modules.length} module{course.modules.length !== 1 ? 's' : ''} •{' '}
-                                  {course.price === 0 ? 'Free' : `$${course.price}`}
-                                </span>
-                              </div>
-                            </>
                           )}
                         </div>
 
-                        {!isEditing && (
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button
-                              onClick={() => {
-                                setEditingCourse(course.id);
-                                setEditTitle(course.title);
-                                setEditDesc(course.description);
-                                setEditPrice(String(course.price));
-                              }}
-                              className="p-1.5 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded transition-colors"
-                              title="Edit"
-                            >
-                              <Edit2 size={14} />
-                            </button>
-                            <button
-                              onClick={() => void handleTogglePublish(course)}
-                              className={`p-1.5 rounded transition-colors ${
-                                course.published
-                                  ? 'text-emerald-400 hover:bg-emerald-900/20'
-                                  : 'text-yellow-400 hover:bg-yellow-900/20'
-                              }`}
-                              title={course.published ? 'Unpublish' : 'Publish'}
-                            >
-                              {course.published ? <EyeOff size={14} /> : <CheckCircle size={14} />}
-                            </button>
-                            <button
-                              onClick={() => void handleDeleteCourse(course.id)}
-                              className="p-1.5 text-neutral-500 hover:text-red-400 hover:bg-red-900/20 rounded transition-colors"
-                              title="Delete"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        )}
-                      </div>
+                        {/* Expanded: Modules & Lessons */}
+                        {isExpanded && (
+                          <div style={{
+                            borderTop: '1px solid rgba(107, 114, 128, 0.5)',
+                            padding: '1rem',
+                            background: 'rgba(5, 15, 30, 0.5)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '1rem',
+                          }}>
+                            {course.modules.length === 0 && (
+                              <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: 0 }}>No modules yet.</p>
+                            )}
 
-                      {/* Expanded: modules & lessons */}
-                      {isExpanded && (
-                        <div className="border-t border-neutral-800 px-4 py-4 space-y-4 bg-neutral-950/30">
-                          {course.modules.length === 0 && (
-                            <p className="text-xs text-neutral-500">No modules yet.</p>
-                          )}
-
-                          {course.modules.map((mod, mIdx) => (
-                            <div key={mod.id} className="border border-neutral-800 rounded-lg overflow-hidden">
-                              {/* Module header */}
-                              <div className="flex items-center justify-between px-3 py-2.5 bg-neutral-800/50">
-                                <span className="text-sm font-medium text-white">
-                                  {mIdx + 1}. {mod.title}
-                                </span>
-                                <button
-                                  onClick={() => void handleDeleteModule(course.id, mod.id)}
-                                  className="p-1 text-neutral-500 hover:text-red-400 rounded transition-colors"
-                                >
-                                  <Trash2 size={12} />
-                                </button>
-                              </div>
-
-                              {/* Lessons */}
-                              <div className="divide-y divide-neutral-800/50">
-                                {mod.lessons.map((lesson) => (
-                                  <div
-                                    key={lesson.id}
-                                    className="flex items-center gap-2 px-3 py-2 text-xs text-neutral-300"
+                            {course.modules.map((mod, mIdx) => (
+                              <div key={mod.id} style={{ border: '1px solid rgba(107, 114, 128, 0.5)', borderRadius: '0.5rem', overflow: 'hidden' }}>
+                                {/* Module Header */}
+                                <div style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  padding: '0.625rem 0.75rem',
+                                  background: 'rgba(31, 41, 55, 0.5)',
+                                }}>
+                                  <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#ffffff' }}>
+                                    {mIdx + 1}. {mod.title}
+                                  </span>
+                                  <button
+                                    onClick={() => void handleDeleteModule(course.id, mod.id)}
+                                    style={{
+                                      padding: '0.25rem',
+                                      background: 'none',
+                                      border: 'none',
+                                      color: '#6b7280',
+                                      cursor: 'pointer',
+                                    }}
                                   >
-                                    <span className="w-2 h-2 rounded-full bg-neutral-700 shrink-0" />
-                                    <span className="flex-1 truncate">{lesson.title}</span>
-                                    <span className="text-neutral-600 uppercase text-[10px]">{lesson.type}</span>
-                                    <button
-                                      onClick={() =>
-                                        void handleDeleteLesson(course.id, mod.id, lesson.id)
-                                      }
-                                      className="p-0.5 text-neutral-600 hover:text-red-400 transition-colors"
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
+
+                                {/* Lessons */}
+                                <div style={{ borderTop: '1px solid rgba(107, 114, 128, 0.3)' }}>
+                                  {mod.lessons.map((lesson) => (
+                                    <div
+                                      key={lesson.id}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem',
+                                        padding: '0.5rem 0.75rem',
+                                        fontSize: '0.75rem',
+                                        color: '#d1d5db',
+                                        borderTop: '1px solid rgba(107, 114, 128, 0.2)',
+                                      }}
                                     >
-                                      <Trash2 size={11} />
-                                    </button>
+                                      <span style={{ width: '0.5rem', height: '0.5rem', borderRadius: '50%', background: '#4b5563', flexShrink: 0 }} />
+                                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {lesson.title}
+                                      </span>
+                                      <span style={{ color: '#9ca3af', fontSize: '0.7rem', textTransform: 'uppercase' }}>
+                                        {lesson.type}
+                                      </span>
+                                      <button
+                                        onClick={() => void handleDeleteLesson(course.id, mod.id, lesson.id)}
+                                        style={{
+                                          padding: '0.125rem',
+                                          background: 'none',
+                                          border: 'none',
+                                          color: '#6b7280',
+                                          cursor: 'pointer',
+                                        }}
+                                      >
+                                        <Trash2 size={11} />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+
+                                {/* Add Lesson */}
+                                {addingLessonTo === mod.id ? (
+                                  <div style={{
+                                    padding: '0.75rem',
+                                    borderTop: '1px solid rgba(107, 114, 128, 0.3)',
+                                    background: 'rgba(15, 23, 42, 0.5)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '0.75rem',
+                                  }}>
+                                    <OperunInput
+                                      placeholder="Lesson title *"
+                                      value={newLessonTitle}
+                                      onChange={(e) => setNewLessonTitle(e.target.value)}
+                                      fullWidth
+                                    />
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                      <select
+                                        style={{
+                                          flex: 1,
+                                          background: 'rgba(31, 41, 55, 0.8)',
+                                          border: '1px solid rgba(107, 114, 128, 0.5)',
+                                          borderRadius: '0.375rem',
+                                          padding: '0.5rem',
+                                          color: '#ffffff',
+                                          fontSize: '0.875rem',
+                                        }}
+                                        value={newLessonType}
+                                        onChange={(e) => setNewLessonType(e.target.value as Lesson['type'])}
+                                      >
+                                        <option value="VIDEO">Video</option>
+                                        <option value="PDF">PDF</option>
+                                        <option value="QUIZ">Quiz</option>
+                                      </select>
+                                      <OperunInput
+                                        placeholder="Duration (10:00)"
+                                        value={newLessonDuration}
+                                        onChange={(e) => setNewLessonDuration(e.target.value)}
+                                        style={{ flex: 1 }}
+                                      />
+                                    </div>
+                                    <OperunInput
+                                      placeholder="Content URL (optional)"
+                                      value={newLessonUrl}
+                                      onChange={(e) => setNewLessonUrl(e.target.value)}
+                                      fullWidth
+                                    />
+                                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                      <OperunButton variant="primary" size="sm" onClick={() => void handleAddLesson(course.id, mod.id)}>
+                                        Add
+                                      </OperunButton>
+                                      <OperunButton
+                                        variant="secondary"
+                                        size="sm"
+                                        onClick={() => {
+                                          setAddingLessonTo(null);
+                                          setNewLessonTitle('');
+                                          setNewLessonUrl('');
+                                          setNewLessonDuration('');
+                                        }}
+                                      >
+                                        Cancel
+                                      </OperunButton>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <button
+                                    onClick={() => setAddingLessonTo(mod.id)}
+                                    style={{
+                                      width: '100%',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem',
+                                      fontSize: '0.875rem',
+                                      color: '#6b7280',
+                                      padding: '0.5rem 0.75rem',
+                                      background: 'none',
+                                      border: 'none',
+                                      borderTop: '1px solid rgba(107, 114, 128, 0.2)',
+                                      cursor: 'pointer',
+                                      justifyContent: 'flex-start',
+                                    }}
+                                  >
+                                    <Plus size={14} /> Add Lesson
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+
+                            {/* Add Module */}
+                            {addingModuleTo === course.id ? (
+                              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem' }}>
+                                <OperunInput
+                                  placeholder="Module title *"
+                                  value={newModuleTitle}
+                                  onChange={(e) => setNewModuleTitle(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') void handleAddModule(course.id);
+                                  }}
+                                  fullWidth
+                                />
+                                <OperunButton variant="primary" onClick={() => void handleAddModule(course.id)}>
+                                  Add
+                                </OperunButton>
+                                <OperunButton variant="secondary" onClick={() => {
+                                  setAddingModuleTo(null);
+                                  setNewModuleTitle('');
+                                }}>
+                                  Cancel
+                                </OperunButton>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => setAddingModuleTo(course.id)}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '0.25rem',
+                                  fontSize: '0.875rem',
+                                  color: '#6b7280',
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <Plus size={14} /> Add Module
+                              </button>
+                            )}
+
+                            {/* Assignments Section */}
+                            <div style={{ borderTop: '1px solid rgba(107, 114, 128, 0.3)', paddingTop: '1rem', marginTop: '1rem' }}>
+                              <AssignmentList courseId={course.id} token={token} />
+                            </div>
+
+                            {/* Quizzes Section */}
+                            <div style={{ borderTop: '1px solid rgba(107, 114, 128, 0.3)', paddingTop: '1rem', marginTop: '1rem' }}>
+                              <QuizList courseId={course.id} token={token} />
+                            </div>
+
+                            {/* Live Classes Section */}
+                            <div style={{ borderTop: '1px solid rgba(107, 114, 128, 0.3)', paddingTop: '1rem', marginTop: '1rem' }}>
+                              <LiveClassList courseId={course.id} token={token} />
+                            </div>
+
+                            {/* Announcements Section */}
+                            <div style={{ borderTop: '1px solid rgba(107, 114, 128, 0.3)', paddingTop: '1rem', marginTop: '1rem' }}>
+                              <AnnouncementList courseId={course.id} token={token} />
+                            </div>
+
+                            {/* Analytics Section */}
+                            <div style={{ borderTop: '1px solid rgba(107, 114, 128, 0.3)', paddingTop: '1rem', marginTop: '1rem' }}>
+                              <AnalyticsDashboard courseId={course.id} token={token} />
+                            </div>
+
+                            {/* Live Sessions Section */}
+                            <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(107, 114, 128, 0.5)' }}>
+                              <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: '#ffffff', marginBottom: '1rem', margin: 0 }}>Live Sessions</h4>
+
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1rem' }}>
+                                {(!course.liveSessions || course.liveSessions.length === 0) && (
+                                  <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: 0 }}>No live sessions scheduled.</p>
+                                )}
+
+                                {course.liveSessions?.map(session => (
+                                  <div
+                                    key={session.id}
+                                    style={{
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      gap: '0.25rem',
+                                      padding: '0.75rem',
+                                      background: 'rgba(31, 41, 55, 0.5)',
+                                      border: '1px solid rgba(107, 114, 128, 0.5)',
+                                      borderRadius: '0.5rem',
+                                    }}
+                                  >
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                      <h5 style={{ fontWeight: 500, fontSize: '0.875rem', color: '#ffffff', margin: 0 }}>
+                                        {session.title}
+                                      </h5>
+                                      <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                        <a
+                                          href={`/dashboard/live/${session.id}`}
+                                          style={{
+                                            fontSize: '0.75rem',
+                                            background: 'rgba(14, 165, 233, 0.2)',
+                                            color: '#0ea5e9',
+                                            padding: '0.25rem 0.75rem',
+                                            borderRadius: '0.375rem',
+                                            textDecoration: 'none',
+                                          }}
+                                        >
+                                          Host
+                                        </a>
+                                        <button
+                                          onClick={() => void handleDeleteLiveSession(course.id, session.id)}
+                                          style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            color: '#6b7280',
+                                            cursor: 'pointer',
+                                            padding: 0,
+                                          }}
+                                        >
+                                          <Trash2 size={14} />
+                                        </button>
+                                      </div>
+                                    </div>
+                                    <p style={{ fontSize: '0.75rem', color: '#9ca3af', margin: 0 }}>
+                                      {new Date(session.startTime).toLocaleString()}
+                                    </p>
                                   </div>
                                 ))}
                               </div>
 
-                              {/* Add lesson inline */}
-                              {addingLessonTo === mod.id ? (
-                                <div className="px-3 py-3 border-t border-neutral-800 space-y-2 bg-neutral-900/50">
-                                  <input
-                                    placeholder="Lesson title *"
-                                    className="w-full bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-xs"
-                                    value={newLessonTitle}
-                                    onChange={(e) => setNewLessonTitle(e.target.value)}
+                              {/* Add Live Session */}
+                              {addingSessionTo === course.id ? (
+                                <div style={{
+                                  padding: '0.75rem',
+                                  border: '1px solid rgba(107, 114, 128, 0.5)',
+                                  borderRadius: '0.5rem',
+                                  background: 'rgba(15, 23, 42, 0.5)',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '0.75rem',
+                                }}>
+                                  <OperunInput
+                                    placeholder="Session Title *"
+                                    value={newSessionTitle}
+                                    onChange={(e) => setNewSessionTitle(e.target.value)}
+                                    fullWidth
                                   />
-                                  <div className="flex gap-2">
-                                    <select
-                                      className="bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-xs flex-1"
-                                      value={newLessonType}
-                                      onChange={(e) => setNewLessonType(e.target.value as Lesson['type'])}
-                                    >
-                                      <option value="VIDEO">Video</option>
-                                      <option value="PDF">PDF</option>
-                                      <option value="QUIZ">Quiz</option>
-                                    </select>
-                                    <input
-                                      placeholder="Duration (e.g. 10:00)"
-                                      className="bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-xs flex-1"
-                                      value={newLessonDuration}
-                                      onChange={(e) => setNewLessonDuration(e.target.value)}
+                                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                    <OperunInput
+                                      type="date"
+                                      value={newSessionDate}
+                                      onChange={(e) => setNewSessionDate(e.target.value)}
+                                      fullWidth
+                                    />
+                                    <OperunInput
+                                      type="time"
+                                      value={newSessionTime}
+                                      onChange={(e) => setNewSessionTime(e.target.value)}
+                                      fullWidth
                                     />
                                   </div>
-                                  <input
-                                    placeholder="Content URL (optional)"
-                                    className="w-full bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-xs"
-                                    value={newLessonUrl}
-                                    onChange={(e) => setNewLessonUrl(e.target.value)}
-                                  />
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => void handleAddLesson(course.id, mod.id)}
-                                      className="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded"
-                                    >
-                                      Add
-                                    </button>
-                                    <button
+                                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                    <OperunButton variant="primary" onClick={() => void handleAddLiveSession(course.id)}>
+                                      Save Session
+                                    </OperunButton>
+                                    <OperunButton
+                                      variant="secondary"
                                       onClick={() => {
-                                        setAddingLessonTo(null);
-                                        setNewLessonTitle('');
-                                        setNewLessonUrl('');
-                                        setNewLessonDuration('');
+                                        setAddingSessionTo(null);
+                                        setNewSessionTitle('');
+                                        setNewSessionDate('');
+                                        setNewSessionTime('');
                                       }}
-                                      className="text-xs bg-neutral-700 text-white px-3 py-1.5 rounded"
                                     >
                                       Cancel
-                                    </button>
+                                    </OperunButton>
                                   </div>
                                 </div>
                               ) : (
                                 <button
-                                  onClick={() => setAddingLessonTo(mod.id)}
-                                  className="w-full flex items-center gap-1 text-xs text-neutral-500 hover:text-blue-400 px-3 py-2 border-t border-neutral-800/50 transition-colors"
+                                  onClick={() => setAddingSessionTo(course.id)}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.25rem',
+                                    fontSize: '0.875rem',
+                                    color: '#6b7280',
+                                    background: 'none',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                  }}
                                 >
-                                  <Plus size={12} /> Add Lesson
+                                  <Plus size={14} /> Schedule Live Session
                                 </button>
                               )}
                             </div>
-                          ))}
-
-                          {/* Add module */}
-                          {addingModuleTo === course.id ? (
-                            <div className="flex gap-2 mt-2">
-                              <input
-                                placeholder="Module title *"
-                                className="flex-1 bg-neutral-800 border border-neutral-700 rounded-lg p-2 text-white text-sm"
-                                value={newModuleTitle}
-                                onChange={(e) => setNewModuleTitle(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') void handleAddModule(course.id);
-                                }}
-                              />
-                              <button
-                                onClick={() => void handleAddModule(course.id)}
-                                className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 rounded-lg"
-                              >
-                                Add
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setAddingModuleTo(null);
-                                  setNewModuleTitle('');
-                                }}
-                                className="bg-neutral-700 text-white text-sm px-3 rounded-lg"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => setAddingModuleTo(course.id)}
-                              className="flex items-center gap-1 text-sm text-neutral-500 hover:text-blue-400 transition-colors"
-                            >
-                              <Plus size={14} /> Add Module
-                            </button>
-                          )}
-
-                          {/* Live Sessions Section */}
-                          <div className="mt-8 pt-6 border-t border-neutral-800">
-                            <h4 className="text-sm font-semibold text-white mb-4">Live Sessions</h4>
-                            
-                            <div className="space-y-3 mb-4">
-                              {(!course.liveSessions || course.liveSessions.length === 0) && (
-                                <p className="text-xs text-neutral-500">No live sessions scheduled.</p>
-                              )}
-                              
-                              {course.liveSessions?.map(session => (
-                                <div key={session.id} className="flex flex-col gap-1 p-3 bg-neutral-800/50 border border-neutral-700 rounded-lg">
-                                  <div className="flex justify-between items-start">
-                                    <h5 className="font-medium text-sm text-white">{session.title}</h5>
-                                    <div className="flex gap-2">
-                                      <a href={`/dashboard/live/${session.id}`} className="text-xs bg-blue-600/20 text-blue-400 px-2 py-1 rounded hover:bg-blue-600/40">
-                                        Host
-                                      </a>
-                                      <button onClick={() => void handleDeleteLiveSession(course.id, session.id)} className="text-neutral-500 hover:text-red-400">
-                                        <Trash2 size={14} />
-                                      </button>
-                                    </div>
-                                  </div>
-                                  <p className="text-xs text-neutral-400">{new Date(session.startTime).toLocaleString()}</p>
-                                </div>
-                              ))}
-                            </div>
-
-                            {/* Add Live Session inline */}
-                            {addingSessionTo === course.id ? (
-                              <div className="p-3 border border-neutral-800 rounded-lg space-y-3 bg-neutral-900/50">
-                                <input
-                                  placeholder="Session Title *"
-                                  className="w-full bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm"
-                                  value={newSessionTitle}
-                                  onChange={(e) => setNewSessionTitle(e.target.value)}
-                                />
-                                <div className="flex gap-2">
-                                  <input
-                                    type="date"
-                                    className="flex-1 bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm"
-                                    value={newSessionDate}
-                                    onChange={(e) => setNewSessionDate(e.target.value)}
-                                  />
-                                  <input
-                                    type="time"
-                                    className="flex-1 bg-neutral-800 border border-neutral-700 rounded p-2 text-white text-sm"
-                                    value={newSessionTime}
-                                    onChange={(e) => setNewSessionTime(e.target.value)}
-                                  />
-                                </div>
-                                <div className="flex gap-2">
-                                  <button
-                                    onClick={() => void handleAddLiveSession(course.id)}
-                                    className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded"
-                                  >
-                                    Save Session
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setAddingSessionTo(null);
-                                      setNewSessionTitle('');
-                                      setNewSessionDate('');
-                                      setNewSessionTime('');
-                                    }}
-                                    className="text-sm bg-neutral-700 text-white px-4 py-1.5 rounded"
-                                  >
-                                    Cancel
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => setAddingSessionTo(course.id)}
-                                className="flex items-center gap-1 text-sm text-neutral-500 hover:text-blue-400 transition-colors"
-                              >
-                                <Plus size={14} /> Schedule Live Session
-                              </button>
-                            )}
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </OperunCardBody>
+          </OperunCard>
         </div>
-      </div>
-    </div>
+      </OperunContainer>
+    </OperunMain>
   );
 }
