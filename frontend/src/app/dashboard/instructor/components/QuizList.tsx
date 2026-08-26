@@ -155,37 +155,33 @@ export default function QuizList({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          <BookOpen className="w-5 h-5" />
-          Quizzes
-        </h3>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+          className="text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-2 py-1 rounded flex items-center gap-1 whitespace-nowrap"
         >
-          <Plus className="w-4 h-4" /> Add Quiz
+          <Plus size={12} /> Add
         </button>
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 bg-red-50 text-red-700 p-3 rounded">
-          <AlertCircle className="w-4 h-4" />
+        <div className="flex items-center gap-2 text-red-400 bg-red-900/20 border border-red-500/30 rounded p-2 text-xs">
+          <AlertCircle size={14} />
           {error}
         </div>
       )}
 
       {showForm && (
-        <div className="bg-gray-50 p-4 rounded space-y-3">
+        <div className="border border-neutral-700 rounded p-3 space-y-2 bg-neutral-800/50">
           <input
             type="text"
-            placeholder="Quiz Title"
+            placeholder="Title *"
             value={formData.title}
             onChange={(e) =>
               setFormData({ ...formData, title: e.target.value })
             }
-            className="w-full px-3 py-2 border rounded"
+            className="w-full bg-neutral-700 border border-neutral-600 rounded p-1.5 text-white text-xs"
           />
           <textarea
             placeholder="Description"
@@ -193,131 +189,82 @@ export default function QuizList({
             onChange={(e) =>
               setFormData({ ...formData, description: e.target.value })
             }
-            className="w-full px-3 py-2 border rounded"
+            className="w-full bg-neutral-700 border border-neutral-600 rounded p-1.5 text-white text-xs resize-none"
             rows={2}
           />
-          <textarea
-            placeholder="Instructions"
-            value={formData.instructions}
-            onChange={(e) =>
-              setFormData({ ...formData, instructions: e.target.value })
-            }
-            className="w-full px-3 py-2 border rounded"
-            rows={2}
-          />
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              type="number"
-              placeholder="Time Limit (minutes)"
-              value={formData.timeLimit}
-              onChange={(e) =>
-                setFormData({ ...formData, timeLimit: e.target.value })
-              }
-              className="px-3 py-2 border rounded"
-            />
-            <input
-              type="number"
-              placeholder="Passing Score (%)"
-              value={formData.passingScore}
-              onChange={(e) =>
-                setFormData({ ...formData, passingScore: e.target.value })
-              }
-              className="px-3 py-2 border rounded"
-            />
-          </div>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.showCorrectAnswers}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    showCorrectAnswers: e.target.checked,
-                  })
-                }
-              />
-              Show Correct Answers
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={formData.randomizeQuestions}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    randomizeQuestions: e.target.checked,
-                  })
-                }
-              />
-              Randomize Questions
-            </label>
-          </div>
-          <div className="flex gap-2 justify-end">
-            <button
-              onClick={() => setShowForm(false)}
-              className="px-4 py-2 border rounded hover:bg-gray-100"
-            >
-              Cancel
-            </button>
+          <div className="flex gap-1.5">
             <button
               onClick={handleAddQuiz}
               disabled={loading}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+              className="text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-2 py-1 rounded"
             >
-              {loading ? 'Creating...' : 'Create Quiz'}
+              {loading ? '…' : 'Save'}
+            </button>
+            <button
+              onClick={() => setShowForm(false)}
+              disabled={loading}
+              className="text-xs bg-neutral-700 hover:bg-neutral-600 disabled:opacity-50 text-white px-2 py-1 rounded"
+            >
+              Close
             </button>
           </div>
         </div>
       )}
 
-      {loading && !showForm ? (
-        <div className="text-center text-gray-500">Loading...</div>
-      ) : quizzes.length === 0 ? (
-        <div className="text-center text-gray-500 py-4">
-          No quizzes yet. Create one to get started!
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {quizzes.map((quiz) => (
+      {loading && quizzes.length === 0 && (
+        <div className="space-y-1">
+          {[1, 2].map((i) => (
             <div
-              key={quiz.id}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded hover:bg-gray-100"
-            >
-              <div className="flex-1">
-                <h4 className="font-medium">{quiz.title}</h4>
-                <p className="text-sm text-gray-600">
-                  {quiz.questions?.length || 0} questions
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handlePublishToggle(quiz)}
-                  className={`px-3 py-1 rounded text-sm ${
-                    quiz.published
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-yellow-100 text-yellow-700'
-                  }`}
-                >
-                  {quiz.published ? 'Published' : 'Draft'}
-                </button>
-                <button
-                  onClick={() => onEditQuiz?.(quiz)}
-                  className="p-1 hover:bg-blue-100 text-blue-600 rounded"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDeleteQuiz(quiz.id)}
-                  className="p-1 hover:bg-red-100 text-red-600 rounded"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+              key={i}
+              className="h-8 bg-neutral-800 rounded animate-pulse"
+            />
           ))}
         </div>
       )}
+
+      {quizzes.length === 0 && !loading && (
+        <p className="text-neutral-500 text-xs text-center py-3">
+          No quizzes yet
+        </p>
+      )}
+
+      <div className="space-y-1">
+        {quizzes.map((quiz) => (
+          <div
+            key={quiz.id}
+            className="border border-neutral-700 rounded p-2 bg-neutral-800/50 flex items-start justify-between gap-2"
+          >
+            <div className="flex-1 min-w-0">
+              <h4 className="font-medium text-white text-xs line-clamp-1">
+                {quiz.title}
+              </h4>
+              {quiz.description && (
+                <p className="text-neutral-400 text-xs mt-0.5 line-clamp-1">
+                  {quiz.description}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <span
+                className={`text-xs px-1.5 py-0.5 rounded ${
+                  quiz.published
+                    ? 'bg-green-900/30 text-green-400'
+                    : 'bg-yellow-900/30 text-yellow-400'
+                }`}
+              >
+                {quiz.published ? 'Pub' : 'Draft'}
+              </span>
+              <button
+                onClick={() => handleDeleteQuiz(quiz.id)}
+                className="p-1 text-neutral-500 hover:text-red-400"
+                title="Delete"
+              >
+                <Trash2 size={12} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

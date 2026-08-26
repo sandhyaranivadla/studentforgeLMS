@@ -144,155 +144,103 @@ export default function AssignmentList({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-          <BookOpen size={18} /> Assignments
-        </h3>
+    <div className="space-y-2" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
         <button
           onClick={() => setShowForm(!showForm)}
           disabled={loading}
-          className="text-sm bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-3 py-1.5 rounded flex items-center gap-1"
+          className="text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-2 py-1 rounded flex items-center gap-1 whitespace-nowrap"
         >
-          <Plus size={14} /> Add Assignment
+          <Plus size={12} /> Add
         </button>
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 text-red-400 bg-red-900/20 border border-red-500/30 rounded p-3 text-sm">
-          <AlertCircle size={16} />
+        <div className="flex items-center gap-2 text-red-400 bg-red-900/20 border border-red-500/30 rounded p-2 text-xs">
+          <AlertCircle size={14} />
           {error}
         </div>
       )}
 
       {showForm && (
-        <div className="border border-neutral-700 rounded-lg p-4 space-y-3 bg-neutral-800/50">
+        <div className="border border-neutral-700 rounded p-3 space-y-2 bg-neutral-800/50">
           <input
             placeholder="Title *"
-            className="w-full bg-neutral-700 border border-neutral-600 rounded p-2 text-white text-sm"
+            className="w-full bg-neutral-700 border border-neutral-600 rounded p-1.5 text-white text-xs"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           />
           <textarea
             placeholder="Description *"
-            rows={3}
-            className="w-full bg-neutral-700 border border-neutral-600 rounded p-2 text-white text-sm resize-none"
+            rows={2}
+            className="w-full bg-neutral-700 border border-neutral-600 rounded p-1.5 text-white text-xs resize-none"
             value={formData.description}
             onChange={(e) =>
               setFormData({ ...formData, description: e.target.value })
             }
           />
-          <textarea
-            placeholder="Instructions (optional)"
-            rows={2}
-            className="w-full bg-neutral-700 border border-neutral-600 rounded p-2 text-white text-sm resize-none"
-            value={formData.instructions}
-            onChange={(e) =>
-              setFormData({ ...formData, instructions: e.target.value })
-            }
-          />
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              type="datetime-local"
-              placeholder="Due Date"
-              className="bg-neutral-700 border border-neutral-600 rounded p-2 text-white text-sm"
-              value={formData.dueDate}
-              onChange={(e) =>
-                setFormData({ ...formData, dueDate: e.target.value })
-              }
-            />
-            <input
-              type="number"
-              placeholder="Max Marks"
-              className="bg-neutral-700 border border-neutral-600 rounded p-2 text-white text-sm"
-              value={formData.maxMarks}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  maxMarks: parseFloat(e.target.value) || 0,
-                })
-              }
-            />
-          </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <button
               onClick={() => void handleAddAssignment()}
               disabled={loading}
-              className="text-sm bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-3 py-1.5 rounded"
+              className="text-xs bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-2 py-1 rounded"
             >
-              {loading ? '…' : 'Create'}
+              {loading ? '…' : 'Save'}
             </button>
             <button
               onClick={() => setShowForm(false)}
               disabled={loading}
-              className="text-sm bg-neutral-700 hover:bg-neutral-600 disabled:opacity-50 text-white px-3 py-1.5 rounded"
+              className="text-xs bg-neutral-700 hover:bg-neutral-600 disabled:opacity-50 text-white px-2 py-1 rounded"
             >
-              Cancel
+              Close
             </button>
           </div>
         </div>
       )}
 
       {loading && assignments.length === 0 && (
-        <div className="space-y-2">
+        <div className="space-y-1">
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="h-12 bg-neutral-800 rounded animate-pulse"
+              className="h-8 bg-neutral-800 rounded animate-pulse"
             />
           ))}
         </div>
       )}
 
       {assignments.length === 0 && !loading && (
-        <p className="text-neutral-500 text-sm text-center py-8">
-          No assignments yet. Create one to get started!
+        <p className="text-neutral-500 text-xs text-center py-3">
+          No assignments yet
         </p>
       )}
 
-      <div className="space-y-2">
+      <div className="space-y-1">
         {assignments.map((assignment) => (
           <div
             key={assignment.id}
-            className="border border-neutral-700 rounded-lg p-4 bg-neutral-800/50 flex items-start justify-between"
+            className="border border-neutral-700 rounded p-2 bg-neutral-800/50 flex items-start justify-between gap-2"
           >
             <div className="flex-1 min-w-0">
-              <h4 className="font-medium text-white text-sm">
+              <h4 className="font-medium text-white text-xs line-clamp-1">
                 {assignment.title}
               </h4>
-              <p className="text-neutral-400 text-xs mt-1 line-clamp-2">
+              <p className="text-neutral-400 text-xs mt-0.5 line-clamp-1">
                 {assignment.description}
               </p>
-              <div className="flex items-center gap-2 mt-2 text-xs text-neutral-500">
-                <span>Max Marks: {assignment.maxMarks}</span>
-                {assignment.dueDate && (
-                  <>
-                    <span>•</span>
-                    <span>
-                      Due: {new Date(assignment.dueDate).toLocaleDateString()}
-                    </span>
-                  </>
-                )}
-              </div>
+              {assignment.dueDate && (
+                <span className="text-xs text-neutral-500 mt-1 block">
+                  Due: {new Date(assignment.dueDate).toLocaleDateString()}
+                </span>
+              )}
             </div>
-            <div className="flex items-center gap-1 shrink-0 ml-4">
-              <button
-                onClick={() =>
-                  onEditAssignment && onEditAssignment(assignment)
-                }
-                className="p-1.5 text-neutral-400 hover:text-white hover:bg-neutral-700 rounded transition-colors"
-                title="Edit"
-              >
-                <Edit2 size={14} />
-              </button>
-              <button
-                onClick={() => void handleDeleteAssignment(assignment.id)}
-                className="p-1.5 text-neutral-500 hover:text-red-400 hover:bg-red-900/20 rounded transition-colors"
-                title="Delete"
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
+            <button
+              onClick={() => void handleDeleteAssignment(assignment.id)}
+              className="p-1 text-neutral-500 hover:text-red-400 flex-shrink-0"
+              title="Delete"
+            >
+              <Trash2 size={12} />
+            </button>
           </div>
         ))}
       </div>
