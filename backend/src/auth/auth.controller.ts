@@ -5,6 +5,7 @@ import {
   Get,
   UseGuards,
   Request,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Role } from '@prisma/client';
@@ -22,16 +23,29 @@ interface AuthRequest extends Request {
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
   @Post('register')
   register(@Body() body: RegisterDto) {
+    // Allow STUDENT and INSTRUCTOR self-registration
+    // ADMIN accounts must be created via admin/setup
+    const role = body.role || Role.STUDENT;
+    
+    if (role === Role.ADMIN) {
+      throw new UnauthorizedException('Admin accounts must be created by administrators');
+    }
+    
     return this.authService.register(
       body.email,
       body.password,
       body.name,
-      body.role || Role.STUDENT,
+      role,
     );
+  }
+
+  @Post('admin/setup')
+  async adminSetup(@Body() body: RegisterDto) {
+    // Allow creating the first admin with no auth required
+    // After that, only existing admins can create new admins
+    return this.authService.adminSetup(body.email, body.password, body.name);
   }
 
   @Post('login')
