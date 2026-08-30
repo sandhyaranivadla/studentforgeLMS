@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { LiveSessionsService } from './live-sessions.service';
 import { LiveSessionsController } from './live-sessions.controller';
-import { PrismaModule } from '../prisma/prisma.module';
+import { PrismaService } from '../prisma/prisma.service';
+import { ZoomService } from './zoom.service';
 
 @Module({
-  imports: [PrismaModule],
   controllers: [LiveSessionsController],
-  providers: [LiveSessionsService],
+  providers: [LiveSessionsService, ZoomService, PrismaService],
 })
 export class LiveSessionsModule {}

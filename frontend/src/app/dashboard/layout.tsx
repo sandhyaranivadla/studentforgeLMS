@@ -1,12 +1,9 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { BookOpen, LogOut, LayoutDashboard, Settings } from 'lucide-react';
+import { BookOpen, LogOut, LayoutDashboard, Settings, Calendar, Bell } from 'lucide-react';
 import React from 'react';
-import Cookies from 'js-cookie';
-import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '@/contexts/AuthContext';
-
-
+import NotificationBell from './components/NotificationBell';
 
 export default function DashboardLayout({
   children,
@@ -18,6 +15,7 @@ export default function DashboardLayout({
   const [isMounted, setIsMounted] = React.useState(false);
 
   React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
   }, []);
 
@@ -50,6 +48,22 @@ export default function DashboardLayout({
           >
             <LayoutDashboard size={20} />
             Dashboard
+          </a>
+          {user.role === 'INSTRUCTOR' && (
+            <a
+              href="/dashboard/instructor/calendar"
+              className="flex items-center gap-3 text-neutral-400 hover:text-white hover:bg-neutral-800 px-4 py-3 rounded-lg font-medium transition-colors"
+            >
+              <Calendar size={20} />
+              Calendar
+            </a>
+          )}
+          <a
+            href="/dashboard/notifications"
+            className="flex items-center gap-3 text-neutral-400 hover:text-white hover:bg-neutral-800 px-4 py-3 rounded-lg font-medium transition-colors"
+          >
+            <Bell size={20} />
+            Notifications
           </a>
           <a
             href="#"
@@ -87,10 +101,13 @@ export default function DashboardLayout({
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col">
-        <header className="h-16 border-b border-neutral-800 bg-neutral-900/50 flex items-center px-6 sticky top-0 backdrop-blur-md z-10">
+        <header className="h-16 border-b border-neutral-800 bg-neutral-900/50 flex items-center justify-between px-6 sticky top-0 backdrop-blur-md z-10">
           <h1 className="text-lg font-semibold text-neutral-200">
             Welcome back, {user.name?.split(' ')[0] || 'User'} 👋
           </h1>
+          <div className="flex items-center gap-4">
+            <NotificationBell />
+          </div>
         </header>
         <div className="p-6 flex-1 overflow-auto bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-neutral-900 via-neutral-950 to-neutral-950">
           {children}

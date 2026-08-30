@@ -10,6 +10,9 @@ import {
   AlertCircle,
   TrendingUp,
 } from 'lucide-react';
+import { OperunCard, OperunCardHeader, OperunCardTitle, OperunCardBody, OperunAlert } from '@/components/ui';
+import { OperunContainer, OperunMain } from '@/components/layout';
+import StudentAssignmentList from './components/StudentAssignmentList';
 
 const API = 'http://localhost:4000';
 
@@ -45,6 +48,7 @@ export default function StudentDashboard() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [liveSessionsByEnrollment, setLiveSessionsByEnrollment] = useState<Record<string, LiveSession[]>>({});
 
   useEffect(() => {
     if (!token) return;
@@ -56,7 +60,33 @@ export default function StudentDashboard() {
         });
         if (!res.ok) throw new Error(`Error ${res.status}`);
         const data = await res.json();
-        setEnrollments(Array.isArray(data) ? data : []);
+        const enrollmentsArray = Array.isArray(data) ? data : [];
+        setEnrollments(enrollmentsArray);
+        
+        // Fetch live sessions for each enrolled course
+        const sessionsByEnrollment: Record<string, LiveSession[]> = {};
+        await Promise.all(
+          enrollmentsArray.map(async (enrollment: Enrollment) => {
+            try {
+              const sessionRes = await fetch(`${API}/live-sessions/course/${enrollment.courseId}`, {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              if (sessionRes.ok) {
+                const sessions = await sessionRes.json();
+                // Filter to only future sessions
+                const now = new Date();
+                sessionsByEnrollment[enrollment.courseId] = (Array.isArray(sessions) ? sessions : [])
+                  .filter((s: LiveSession) => new Date(s.startTime) > now)
+                  .sort((a: LiveSession, b: LiveSession) => 
+                    new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+                  );
+              }
+            } catch {
+              // Non-fatal - continue with other courses
+            }
+          })
+        );
+        setLiveSessionsByEnrollment(sessionsByEnrollment);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Failed to load enrollments');
       } finally {
@@ -108,224 +138,329 @@ export default function StudentDashboard() {
   };
 
   return (
-    <div className="space-y-8">
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-neutral-900/50 border border-neutral-800 p-5 rounded-2xl hover:border-blue-500/50 transition-colors">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-neutral-400 text-xs font-medium uppercase tracking-wider">
-              In Progress
-            </h3>
-            <PlayCircle className="text-blue-500 h-4 w-4" />
-          </div>
-          <p className="text-3xl font-bold text-white">{loading ? '—' : active.length}</p>
-        </div>
-
-        <div className="bg-neutral-900/50 border border-neutral-800 p-5 rounded-2xl hover:border-emerald-500/50 transition-colors">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-neutral-400 text-xs font-medium uppercase tracking-wider">
-              Completed
-            </h3>
-            <Award className="text-emerald-500 h-4 w-4" />
-          </div>
-          <p className="text-3xl font-bold text-white">{loading ? '—' : completed.length}</p>
-        </div>
-
-        <div className="bg-neutral-900/50 border border-neutral-800 p-5 rounded-2xl hover:border-purple-500/50 transition-colors">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-neutral-400 text-xs font-medium uppercase tracking-wider">
-              Enrolled
-            </h3>
-            <BookMarked className="text-purple-500 h-4 w-4" />
-          </div>
-          <p className="text-3xl font-bold text-white">
-            {loading ? '—' : enrollments.length}
-          </p>
-        </div>
-
-        <div className="bg-neutral-900/50 border border-neutral-800 p-5 rounded-2xl hover:border-yellow-500/50 transition-colors">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-neutral-400 text-xs font-medium uppercase tracking-wider">
-              Avg. Progress
-            </h3>
-            <TrendingUp className="text-yellow-500 h-4 w-4" />
-          </div>
-          <p className="text-3xl font-bold text-white">
-            {loading ? '—' : `${averageProgress}%`}
-          </p>
-        </div>
-      </div>
-
-      {/* Course cards */}
-      <div className="bg-neutral-900/50 border border-neutral-800 rounded-2xl p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-white">My Courses</h2>
-        </div>
-
-        {/* Loading skeleton */}
-        {loading && (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                className="border border-neutral-800 rounded-xl overflow-hidden animate-pulse"
-              >
-                <div className="h-36 bg-neutral-800" />
-                <div className="p-4 space-y-3">
-                  <div className="h-4 bg-neutral-800 rounded w-3/4" />
-                  <div className="h-3 bg-neutral-800 rounded w-1/2" />
-                  <div className="h-2 bg-neutral-800 rounded-full" />
+    <OperunMain>
+      <OperunContainer maxWidth="lg">
+        <div style={{ paddingTop: '2rem', paddingBottom: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          {/* Stats Grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
+            <OperunCard>
+              <OperunCardBody>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                  <h3 style={{ color: '#9ca3af', fontSize: '0.75rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+                    In Progress
+                  </h3>
+                  <PlayCircle style={{ color: '#0ea5e9', width: '16px', height: '16px' }} />
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+                <p style={{ fontSize: '1.875rem', fontWeight: 'bold', margin: 0, color: '#ffffff' }}>
+                  {loading ? '—' : active.length}
+                </p>
+              </OperunCardBody>
+            </OperunCard>
 
-        {/* Error */}
-        {!loading && error && (
-          <div className="flex items-center gap-3 text-red-400 bg-red-900/20 border border-red-500/30 rounded-xl p-4">
-            <AlertCircle size={18} />
-            <span className="text-sm">{error}</span>
-          </div>
-        )}
+            <OperunCard>
+              <OperunCardBody>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                  <h3 style={{ color: '#9ca3af', fontSize: '0.75rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+                    Completed
+                  </h3>
+                  <Award style={{ color: '#10b981', width: '16px', height: '16px' }} />
+                </div>
+                <p style={{ fontSize: '1.875rem', fontWeight: 'bold', margin: 0, color: '#ffffff' }}>
+                  {loading ? '—' : completed.length}
+                </p>
+              </OperunCardBody>
+            </OperunCard>
 
-        {/* Empty */}
-        {!loading && !error && enrollments.length === 0 && (
-          <div className="text-center py-12 bg-neutral-950 rounded-xl border border-neutral-800 border-dashed">
-            <BookMarked className="h-10 w-10 text-neutral-600 mx-auto mb-3" />
-            <p className="text-neutral-500 mb-4">
-              You haven&apos;t been enrolled in any courses yet.
-            </p>
-            <p className="text-neutral-600 text-sm">
-              Please contact your administrator to get access.
-            </p>
-          </div>
-        )}
+            <OperunCard>
+              <OperunCardBody>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                  <h3 style={{ color: '#9ca3af', fontSize: '0.75rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+                    Enrolled
+                  </h3>
+                  <BookMarked style={{ color: '#a855f7', width: '16px', height: '16px' }} />
+                </div>
+                <p style={{ fontSize: '1.875rem', fontWeight: 'bold', margin: 0, color: '#ffffff' }}>
+                  {loading ? '—' : enrollments.length}
+                </p>
+              </OperunCardBody>
+            </OperunCard>
 
-        {/* Cards */}
-        {!loading && !error && enrollments.length > 0 && (
-          <>
-            {/* In-progress section */}
-            {active.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-sm font-medium text-neutral-400 uppercase tracking-wider mb-4">
-                  Continue Learning
-                </h3>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {active.map((enrollment) => (
-                    <CourseCard
-                      key={enrollment.id}
-                      enrollment={enrollment}
-                      statusBadge={statusBadge(enrollment)}
-                      barColor={progressBarColor(enrollment.progress, enrollment.status)}
-                    />
+            <OperunCard>
+              <OperunCardBody>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                  <h3 style={{ color: '#9ca3af', fontSize: '0.75rem', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+                    Avg. Progress
+                  </h3>
+                  <TrendingUp style={{ color: '#eab308', width: '16px', height: '16px' }} />
+                </div>
+                <p style={{ fontSize: '1.875rem', fontWeight: 'bold', margin: 0, color: '#ffffff' }}>
+                  {loading ? '—' : `${averageProgress}%`}
+                </p>
+              </OperunCardBody>
+            </OperunCard>
+          </div>
+
+          {/* My Courses Section */}
+          <OperunCard>
+            <OperunCardHeader>
+              <OperunCardTitle>My Courses</OperunCardTitle>
+            </OperunCardHeader>
+
+            <OperunCardBody>
+              {/* Loading */}
+              {loading && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        border: '1px solid rgba(107, 114, 128, 0.5)',
+                        borderRadius: '0.75rem',
+                        overflow: 'hidden',
+                        animation: 'pulse 2s infinite',
+                      }}
+                    >
+                      <div style={{ height: '144px', background: 'rgba(31, 41, 55, 0.5)' }} />
+                      <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        <div style={{ height: '1rem', background: 'rgba(31, 41, 55, 0.5)', borderRadius: '0.375rem', width: '75%' }} />
+                        <div style={{ height: '0.75rem', background: 'rgba(31, 41, 55, 0.5)', borderRadius: '0.375rem', width: '50%' }} />
+                        <div style={{ height: '0.5rem', background: 'rgba(31, 41, 55, 0.5)', borderRadius: '9999px' }} />
+                      </div>
+                    </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Not started section */}
-            {notStarted.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-sm font-medium text-neutral-400 uppercase tracking-wider mb-4">
-                  Not Started
-                </h3>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {notStarted.map((enrollment) => (
-                    <CourseCard
-                      key={enrollment.id}
-                      enrollment={enrollment}
-                      statusBadge={statusBadge(enrollment)}
-                      barColor={progressBarColor(enrollment.progress, enrollment.status)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+              {/* Error */}
+              {!loading && error && (
+                <OperunAlert variant="error" onClose={() => setError('')}>
+                  {error}
+                </OperunAlert>
+              )}
 
-            {/* Completed section */}
-            {completed.length > 0 && (
-              <div>
-                <h3 className="text-sm font-medium text-neutral-400 uppercase tracking-wider mb-4">
-                  Completed
-                </h3>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {completed.map((enrollment) => (
-                    <CourseCard
-                      key={enrollment.id}
-                      enrollment={enrollment}
-                      statusBadge={statusBadge(enrollment)}
-                      barColor={progressBarColor(enrollment.progress, enrollment.status)}
-                    />
-                  ))}
+              {/* Empty State */}
+              {!loading && !error && enrollments.length === 0 && (
+                <div style={{
+                  textAlign: 'center',
+                  paddingTop: '3rem',
+                  paddingBottom: '3rem',
+                  background: 'rgba(5, 15, 30, 0.5)',
+                  borderRadius: '0.75rem',
+                  border: '1px dashed rgba(107, 114, 128, 0.5)',
+                }}>
+                  <BookMarked style={{ width: '40px', height: '40px', color: '#4b5563', marginLeft: 'auto', marginRight: 'auto', marginBottom: '0.75rem' }} />
+                  <p style={{ color: '#6b7280', marginBottom: '1rem', margin: 0 }}>
+                    You haven't been enrolled in any courses yet.
+                  </p>
+                  <p style={{ color: '#4b5563', fontSize: '0.875rem', margin: 0 }}>
+                    Please contact your administrator to get access.
+                  </p>
                 </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    </div>
+              )}
+
+              {/* In-progress section */}
+              {!loading && !error && enrollments.length > 0 && active.length > 0 && (
+                <div style={{ marginBottom: '2rem' }}>
+                  <h3 style={{ fontSize: '0.875rem', fontWeight: 500, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem', margin: 0 }}>
+                    Continue Learning
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                    {active.map((enrollment) => (
+                      <CourseCard
+                        key={enrollment.id}
+                        enrollment={enrollment}
+                        liveSessions={liveSessionsByEnrollment[enrollment.courseId] || []}
+                        statusBadge={statusBadge(enrollment)}
+                        barColor={progressBarColor(enrollment.progress, enrollment.status)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Not started section */}
+              {!loading && !error && enrollments.length > 0 && notStarted.length > 0 && (
+                <div style={{ marginBottom: '2rem' }}>
+                  <h3 style={{ fontSize: '0.875rem', fontWeight: 500, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem', margin: 0 }}>
+                    Not Started
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                    {notStarted.map((enrollment) => (
+                      <CourseCard
+                        key={enrollment.id}
+                        enrollment={enrollment}
+                        liveSessions={liveSessionsByEnrollment[enrollment.courseId] || []}
+                        statusBadge={statusBadge(enrollment)}
+                        barColor={progressBarColor(enrollment.progress, enrollment.status)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Completed section */}
+              {!loading && !error && enrollments.length > 0 && completed.length > 0 && (
+                <div>
+                  <h3 style={{ fontSize: '0.875rem', fontWeight: 500, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem', margin: 0 }}>
+                    Completed
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                    {completed.map((enrollment) => (
+                      <CourseCard
+                        key={enrollment.id}
+                        enrollment={enrollment}
+                        liveSessions={liveSessionsByEnrollment[enrollment.courseId] || []}
+                        statusBadge={statusBadge(enrollment)}
+                        barColor={progressBarColor(enrollment.progress, enrollment.status)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </OperunCardBody>
+          </OperunCard>
+
+          {/* Assignments Section */}
+          <StudentAssignmentList token={token} />
+        </div>
+      </OperunContainer>
+    </OperunMain>
   );
 }
 
 /* ─── CourseCard ─────────────────────────────────────────────────── */
 function CourseCard({
   enrollment,
+  liveSessions,
   statusBadge,
   barColor,
 }: {
   enrollment: Enrollment;
+  liveSessions: LiveSession[];
   statusBadge: React.ReactNode;
   barColor: string;
 }) {
+  const barColorMap: Record<string, string> = {
+    'bg-emerald-500': '#10b981',
+    'bg-blue-500': '#0ea5e9',
+    'bg-neutral-700': '#4b5563',
+  };
+
+  const progressColor = barColorMap[barColor] || '#0ea5e9';
+
   return (
-    <div className="border border-neutral-800 bg-neutral-950 rounded-xl overflow-hidden flex flex-col hover:border-blue-500/40 transition-colors group">
+    <div style={{
+      border: '1px solid rgba(107, 114, 128, 0.5)',
+      background: 'rgba(5, 15, 30, 0.5)',
+      borderRadius: '0.75rem',
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+      transition: 'border-color 0.3s, transform 0.3s',
+    }} onMouseEnter={(e) => {
+      (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(14, 165, 233, 0.4)';
+      (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
+    }} onMouseLeave={(e) => {
+      (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(107, 114, 128, 0.5)';
+      (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+    }}>
       {/* Thumbnail */}
-      <div className="h-36 bg-neutral-800 relative overflow-hidden">
+      <div style={{ height: '144px', background: 'rgba(31, 41, 55, 0.8)', position: 'relative', overflow: 'hidden' }}>
         {enrollment.course?.thumbnail ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={enrollment.course.thumbnail}
             alt={enrollment.course.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transition: 'transform 0.5s',
+            }}
+            onMouseEnter={(e) => {
+              (e.target as HTMLImageElement).style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              (e.target as HTMLImageElement).style.transform = 'scale(1)';
+            }}
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-blue-900/40 to-purple-900/40 flex items-center justify-center">
-            <BookMarked className="h-10 w-10 text-neutral-600" />
+          <div style={{
+            width: '100%',
+            height: '100%',
+            background: 'linear-gradient(135deg, rgba(30, 58, 138, 0.4), rgba(126, 39, 141, 0.4))',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <BookMarked style={{ width: '40px', height: '40px', color: '#4b5563' }} />
           </div>
         )}
-        <div className="absolute top-2 right-2">{statusBadge}</div>
+        <div style={{ position: 'absolute', top: '0.5rem', right: '0.5rem' }}>
+          {statusBadge}
+        </div>
       </div>
 
-      <div className="p-4 flex flex-col flex-1">
-        <h3 className="font-bold text-white mb-1 line-clamp-2 group-hover:text-blue-400 transition-colors">
+      <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <h3 style={{
+          fontWeight: 700,
+          color: '#ffffff',
+          marginBottom: '0.25rem',
+          margin: 0,
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          fontSize: '0.875rem',
+        }}>
           {enrollment.course?.title}
         </h3>
-        <p className="text-xs text-neutral-500 mb-4">
+        <p style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '1rem', margin: 0 }}>
           by {enrollment.course?.instructor?.name || 'Instructor'}
         </p>
 
         {/* Progress */}
-        <div className="mt-auto">
-          <div className="flex justify-between text-xs text-neutral-500 mb-1.5">
+        <div style={{ marginTop: 'auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.5rem' }}>
             <span>Progress</span>
-            <span className="tabular-nums font-medium text-neutral-300">
+            <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 500, color: '#d1d5db' }}>
               {Math.round(enrollment.progress)}%
             </span>
           </div>
-          <div className="w-full bg-neutral-800 rounded-full h-1.5 mb-4 overflow-hidden">
+          <div style={{
+            width: '100%',
+            background: 'rgba(31, 41, 55, 0.8)',
+            borderRadius: '9999px',
+            height: '0.375rem',
+            marginBottom: '1rem',
+            overflow: 'hidden',
+          }}>
             <div
-              className={`${barColor} h-1.5 rounded-full transition-all duration-700`}
-              style={{ width: `${enrollment.progress}%` }}
+              style={{
+                background: progressColor,
+                height: '0.375rem',
+                borderRadius: '9999px',
+                width: `${enrollment.progress}%`,
+                transition: 'width 0.7s',
+              }}
             />
           </div>
           <Link
             href={`/learn/${enrollment.courseId}`}
-            className={`block text-center w-full font-medium py-2 rounded-lg transition-colors text-sm ${
-              enrollment.status === 'COMPLETED'
-                ? 'bg-emerald-900/30 hover:bg-emerald-900/50 text-emerald-400 border border-emerald-500/30'
-                : 'bg-neutral-800 hover:bg-blue-600 text-white'
-            }`}
+            style={{
+              display: 'block',
+              textAlign: 'center',
+              width: '100%',
+              fontWeight: 500,
+              padding: '0.5rem',
+              borderRadius: '0.5rem',
+              transition: 'all 0.3s',
+              fontSize: '0.875rem',
+              textDecoration: 'none',
+              background: enrollment.status === 'COMPLETED' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(31, 41, 55, 0.8)',
+              color: enrollment.status === 'COMPLETED' ? '#10b981' : '#ffffff',
+              border: enrollment.status === 'COMPLETED' ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(107, 114, 128, 0.5)',
+            }}
           >
             {enrollment.status === 'COMPLETED'
               ? 'Review Course'
@@ -333,19 +468,43 @@ function CourseCard({
                 ? 'Start Learning'
                 : 'Continue Learning'}
           </Link>
-          
-          {enrollment.course?.liveSessions && enrollment.course.liveSessions.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-neutral-800">
-              <h4 className="text-xs text-neutral-400 mb-2 uppercase tracking-wider font-semibold">Upcoming Live Sessions</h4>
-              <div className="space-y-2">
-                {enrollment.course.liveSessions.map(session => (
+
+          {liveSessions && liveSessions.length > 0 && (
+            <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(107, 114, 128, 0.5)' }}>
+              <h4 style={{ fontSize: '0.75rem', color: '#9ca3af', marginBottom: '0.5rem', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
+                Upcoming Live Sessions
+              </h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {liveSessions.map(session => (
                   <Link
                     key={session.id}
-                    href={`/dashboard/live/${session.id}`}
-                    className="flex flex-col gap-1 w-full text-left bg-blue-900/20 hover:bg-blue-900/40 border border-blue-500/20 rounded-lg p-2 transition-colors"
+                    href={`/live/${session.id}`}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.25rem',
+                      width: '100%',
+                      textAlign: 'left',
+                      background: 'rgba(30, 58, 138, 0.2)',
+                      border: '1px solid rgba(14, 165, 233, 0.2)',
+                      borderRadius: '0.5rem',
+                      padding: '0.5rem',
+                      transition: 'all 0.3s',
+                      textDecoration: 'none',
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(30, 58, 138, 0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(30, 58, 138, 0.2)';
+                    }}
                   >
-                    <span className="text-sm font-medium text-blue-400 line-clamp-1">{session.title}</span>
-                    <span className="text-xs text-blue-300/70">{new Date(session.startTime).toLocaleString()}</span>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#0ea5e9', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {session.title}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: 'rgba(14, 165, 233, 0.7)' }}>
+                      {new Date(session.startTime).toLocaleString()}
+                    </span>
                   </Link>
                 ))}
               </div>

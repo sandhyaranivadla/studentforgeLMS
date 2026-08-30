@@ -1,14 +1,23 @@
-import { IsString, IsNotEmpty, IsDateString, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsISO8601 } from 'class-validator';
 
 export class CreateLiveSessionDto {
   @IsString()
   @IsNotEmpty()
-  courseId: string;
+  title!: string;
 
   @IsString()
-  @IsNotEmpty()
-  title: string;
+  @IsOptional()
+  description?: string;
 
-  @IsDateString()
-  startTime: string;
+  @IsISO8601()
+  @IsNotEmpty()
+  startTime!: string;
+
+  @IsISO8601()
+  @IsOptional()
+  endTime?: string;
+
+  @IsString()
+  @IsOptional()
+  moduleId?: string;
 }

@@ -39,7 +39,11 @@ export class EnrollmentsController {
     @Request() req: AuthRequest,
     @Body() createEnrollmentDto: CreateEnrollmentDto,
   ) {
-    return this.enrollmentsService.create(req.user.id, createEnrollmentDto, req.user.role);
+    return this.enrollmentsService.create(
+      req.user.id,
+      createEnrollmentDto,
+      req.user.role,
+    );
   }
 
   @Roles(Role.STUDENT)

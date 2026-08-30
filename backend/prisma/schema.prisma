@@ -7,17 +7,21 @@ datasource db {
 }
 
 model User {
-  id             String           @id @default(uuid())
-  email          String
+  id             String                   @id @default(uuid())
+  email          String                   @unique
   passwordHash   String
   name           String?
-  role           Role             @default(STUDENT)
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  courses        Course[]         @relation("InstructorCourses")
+  role           Role                     @default(STUDENT)
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  courses        Course[]                 @relation("InstructorCourses")
   enrollments    Enrollment[]
   lessonProgress LessonProgress[]
   messages       Message[]
+  submissions    AssignmentSubmission[]   @relation("StudentSubmissions")
+  quizAttempts   QuizAttempt[]
+  announcements  Announcement[]           @relation("InstructorAnnouncements")
+  notifications  Notification[]
 }
 
 model Course {
@@ -36,15 +40,22 @@ model Course {
   lessonProgress LessonProgress[]
   liveSessions   LiveSession[]
   messages       Message[]
+  assignments    Assignment[]
+  quizzes        Quiz[]
+  announcements  Announcement[]
+  notifications  Notification[]
 }
 
 model CourseModule {
-  id         String   @id @default(uuid())
-  title      String
-  courseId   String
-  orderIndex Int
-  course     Course   @relation(fields: [courseId], references: [id])
-  lessons    Lesson[]
+  id           String         @id @default(uuid())
+  title        String
+  courseId     String
+  orderIndex   Int
+  course       Course         @relation(fields: [courseId], references: [id])
+  lessons      Lesson[]
+  assignments  Assignment[]
+  quizzes      Quiz[]
+  liveSessions LiveSession[]
 }
 
 model Lesson {
@@ -86,11 +97,19 @@ model Enrollment {
 }
 
 model LiveSession {
-  id            String   @id @default(uuid())
+  id            String                  @id @default(uuid())
   courseId      String
+  moduleId      String?
   title         String
+  description   String?
   startTime     DateTime
-  course        Course   @relation(fields: [courseId], references: [id])
+  endTime       DateTime?
+  status        LiveSessionStatus       @default(SCHEDULED)
+  zoomMeetingId String?
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  course        Course                  @relation(fields: [courseId], references: [id])
+  module        CourseModule?           @relation(fields: [moduleId], references: [id])
 }
 
 model Message {
@@ -119,4 +138,219 @@ enum EnrollmentStatus {
   ACTIVE
   COMPLETED
   CANCELLED
+}
+
+enum LiveSessionStatus {
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+}
+
+model Assignment {
+  id            String                   @id @default(uuid())
+  courseId      String
+  moduleId      String?
+  title         String
+  description   String
+  instructions  String?
+  dueDate       DateTime?
+  maxMarks      Float                    @default(0.0)
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+  
+  course        Course                   @relation(fields: [courseId], references: [id])
+  module        CourseModule?            @relation(fields: [moduleId], references: [id])
+  submissions   AssignmentSubmission[]
+  
+  @@index([courseId])
+  @@index([moduleId])
+}
+
+model AssignmentSubmission {
+  id              String     @id @default(uuid())
+  assignmentId    String
+  studentId       String
+  submissionText  String?
+  marks           Float?
+  feedback        String?
+  submittedAt     DateTime   @default(now())
+  gradedAt        DateTime?
+  updatedAt       DateTime   @updatedAt
+  
+  assignment      Assignment @relation(fields: [assignmentId], references: [id])
+  student         User       @relation("StudentSubmissions", fields: [studentId], references: [id])
+  
+  @@unique([assignmentId, studentId])
+  @@index([assignmentId])
+  @@index([studentId])
+}
+
+model Quiz {
+  id                     String          @id @default(uuid())
+  courseId               String
+  moduleId               String?
+  title                  String
+  description            String?
+  instructions           String?
+  published              Boolean         @default(false)
+  timeLimit              Int?
+  passingScore           Float?
+  showCorrectAnswers     Boolean         @default(false)
+  randomizeQuestions     Boolean         @default(false)
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  
+  course                 Course          @relation(fields: [courseId], references: [id])
+  module                 CourseModule?   @relation(fields: [moduleId], references: [id])
+  questions              QuizQuestion[]
+  attempts               QuizAttempt[]
+  
+  @@index([courseId])
+  @@index([moduleId])
+}
+
+model QuizQuestion {
+  id                String        @id @default(uuid())
+  quizId            String
+  questionText      String
+  marks             Float         @default(1.0)
+  orderIndex        Int
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  quiz              Quiz          @relation(fields: [quizId], references: [id])
+  options           QuizOption[]
+  studentAnswers    StudentQuizAnswer[]
+  
+  @@index([quizId])
+}
+
+model QuizOption {
+  id                String        @id @default(uuid())
+  questionId        String
+  optionText        String
+  isCorrect         Boolean       @default(false)
+  orderIndex        Int
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  question          QuizQuestion  @relation(fields: [questionId], references: [id])
+  studentAnswers    StudentQuizAnswer[]
+  
+  @@index([questionId])
+}
+
+model QuizAttempt {
+  id                String            @id @default(uuid())
+  quizId            String
+  studentId         String
+  startedAt         DateTime          @default(now())
+  submittedAt       DateTime?
+  score             Float?
+  totalMarks        Float?
+  passing           Boolean?
+  createdAt         DateTime          @default(now())
+  
+  quiz              Quiz              @relation(fields: [quizId], references: [id])
+  student           User              @relation(fields: [studentId], references: [id])
+  answers           StudentQuizAnswer[]
+  
+  @@unique([quizId, studentId])
+  @@index([quizId])
+  @@index([studentId])
+}
+
+model StudentQuizAnswer {
+  id                String        @id @default(uuid())
+  attemptId         String
+  questionId        String
+  selectedOptionId   String?
+  marksObtained     Float?
+  createdAt         DateTime      @default(now())
+  
+  attempt           QuizAttempt   @relation(fields: [attemptId], references: [id])
+  question          QuizQuestion  @relation(fields: [questionId], references: [id])
+  selectedOption    QuizOption?   @relation(fields: [selectedOptionId], references: [id])
+  
+  @@index([attemptId])
+  @@index([questionId])
+}
+
+model Announcement {
+  id           String                @id @default(uuid())
+  courseId     String
+  instructorId String
+  
+  title        String
+  content      String
+  status       AnnouncementStatus    @default(DRAFT)
+  
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  publishedAt  DateTime?
+  
+  course       Course                @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  instructor   User                  @relation("InstructorAnnouncements", fields: [instructorId], references: [id])
+  
+  @@index([courseId])
+  @@index([instructorId])
+  @@index([publishedAt])
+  @@index([status])
+}
+
+enum AnnouncementStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Notification {
+  id                String              @id @default(uuid())
+  
+  // Recipient
+  userId            String
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Context
+  courseId          String
+  course            Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  // Content
+  type              NotificationType
+  title             String
+  message           String
+  
+  // Status
+  read              Boolean             @default(false)
+  readAt            DateTime?
+  
+  // Related Entity Reference
+  relatedEntityId   String?
+  relatedEntityType String?
+  actionUrl         String?
+  
+  // Timestamps
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+  @@index([courseId])
+  @@index([userId, read, createdAt])
+  @@index([userId, courseId])
+  @@index([type])
+}
+
+enum NotificationType {
+  ASSIGNMENT_SUBMITTED
+  ASSIGNMENT_GRADED
+  ASSIGNMENT_CREATED
+  ANNOUNCEMENT_PUBLISHED
+  LIVE_SESSION_SCHEDULED
+  LIVE_SESSION_UPDATED
+  LIVE_SESSION_CANCELLED
+  ENROLLMENT_CONFIRMED
+  COURSE_PUBLISHED
+  QUIZ_PUBLISHED
 }

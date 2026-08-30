@@ -17,11 +17,19 @@ import { Role } from '@prisma/client';
 export class CoursesService {
   constructor(private prisma: PrismaService) {}
 
-  async createCourse(userId: string, createCourseDto: CreateCourseDto, userRole?: Role) {
+  async createCourse(
+    userId: string,
+    createCourseDto: CreateCourseDto,
+    userRole?: Role,
+  ) {
     // If admin provides an instructorId, use it. Otherwise default to the requester (useful if Instructor creates it, though instructors aren't supposed to anymore).
-    const instructorId = (userRole === Role.ADMIN && createCourseDto.instructorId) ? createCourseDto.instructorId : userId;
-    
+    const instructorId =
+      userRole === Role.ADMIN && createCourseDto.instructorId
+        ? createCourseDto.instructorId
+        : userId;
+
     // omit instructorId from the rest of the dto to avoid Prisma type errors if it's there
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { instructorId: _omitted, ...courseData } = createCourseDto;
 
     return this.prisma.course.create({

@@ -1,0 +1,17 @@
+ALTER TABLE "User" SET (schema_locked = false);
+ALTER TABLE "Course" SET (schema_locked = false);
+ALTER TABLE "CourseModule" SET (schema_locked = false);
+ALTER TABLE "Lesson" SET (schema_locked = false);
+ALTER TABLE "LessonProgress" SET (schema_locked = false);
+ALTER TABLE "Enrollment" SET (schema_locked = false);
+ALTER TABLE "LiveSession" SET (schema_locked = false);
+ALTER TABLE "Message" SET (schema_locked = false);
+ALTER TABLE "Assignment" SET (schema_locked = false);
+ALTER TABLE "AssignmentSubmission" SET (schema_locked = false);
+ALTER TABLE "Quiz" SET (schema_locked = false);
+ALTER TABLE "QuizQuestion" SET (schema_locked = false);
+ALTER TABLE "QuizOption" SET (schema_locked = false);
+ALTER TABLE "QuizAttempt" SET (schema_locked = false);
+ALTER TABLE "StudentQuizAnswer" SET (schema_locked = false);
+ALTER TABLE "Announcement" SET (schema_locked = false);
+ALTER TABLE "Notification" SET (schema_locked = false);

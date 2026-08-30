@@ -1,19 +1,89 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import { Video, Mic, MicOff, VideoOff, Settings, Users, MessageSquare, Hand, PhoneOff, ChevronLeft } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Video, Mic, MicOff, VideoOff, Settings, Users, MessageSquare, Hand, PhoneOff, ChevronLeft, AlertCircle } from 'lucide-react';
 
-export default function LiveClass() {
+interface LiveSession {
+  id: string;
+  title: string;
+  description?: string;
+  startTime: string;
+  status: string;
+  zoomMeetingId?: string;
+  course: {
+    id: string;
+    title: string;
+    instructor: { name: string | null };
+  };
+}
+
+const API = 'http://localhost:4000';
+
+export default function LiveClass({ params }: { params: Promise<{ sessionId: string }> }) {
+  const { sessionId } = use(params);
+  const { token } = useAuth();
   const [micOn, setMicOn] = useState(false);
   const [cameraOn, setCameraOn] = useState(true);
   const [showChat, setShowChat] = useState(false);
+  const [session, setSession] = useState<LiveSession | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!token) return;
+    const fetchSession = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`${API}/live-sessions/${sessionId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) {
+          setError('Session not found or access denied');
+          return;
+        }
+        const data = await res.json();
+        setSession(data);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to load session');
+      } finally {
+        setLoading(false);
+      }
+    };
+    void fetchSession();
+  }, [token, sessionId]);
+
+  if (loading) {
+    return (
+      <div className="h-screen bg-neutral-950 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-blue-500 mx-auto mb-4"></div>
+          <p>Loading session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !session) {
+    return (
+      <div className="h-screen bg-neutral-950 text-white flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
+          <p className="text-lg mb-4">{error || 'Session not found'}</p>
+          <Link href="/dashboard/student" className="text-blue-400 hover:text-blue-300">
+            Return to Dashboard
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen bg-neutral-950 text-white flex flex-col font-sans overflow-hidden">
       {/* Header */}
       <header className="h-16 border-b border-neutral-800 bg-neutral-950 flex items-center px-4 justify-between shrink-0">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="p-2 hover:bg-neutral-800 rounded-lg transition-colors text-neutral-400 hover:text-white">
+          <Link href="/dashboard/student" className="p-2 hover:bg-neutral-800 rounded-lg transition-colors text-neutral-400 hover:text-white">
             <ChevronLeft size={20} />
           </Link>
           <div className="flex items-center gap-3">
@@ -21,11 +91,14 @@ export default function LiveClass() {
               <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
               Live
             </div>
-            <span className="font-semibold text-sm sm:text-base truncate">Database Sharding Strategies</span>
+            <div>
+              <span className="font-semibold text-sm sm:text-base truncate block">{session.title}</span>
+              <span className="text-xs text-neutral-400">{session.course.title} • Instructor: {session.course.instructor?.name || 'Instructor'}</span>
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-4 text-sm text-neutral-400">
-          <span className="hidden sm:inline">01:45:22 elapsed</span>
+          <span className="hidden sm:inline">Scheduled: {new Date(session.startTime).toLocaleString()}</span>
         </div>
       </header>
 
@@ -36,13 +109,56 @@ export default function LiveClass() {
         <div className="flex-1 bg-black flex flex-col relative p-2 sm:p-4 gap-4 overflow-hidden">
           
           {/* Main Speaker View */}
-          <div className="flex-1 bg-neutral-900 rounded-2xl overflow-hidden relative border border-neutral-800">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="https://images.unsplash.com/photo-1516321497487-e288fb19713f?q=80&w=1200&auto=format&fit=crop" alt="Screen share" className="w-full h-full object-cover opacity-80" />
-            
-            <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-lg text-sm font-medium border border-white/10 flex items-center gap-2">
-              Dr. Smith (Host)
-              <Mic size={14} className="text-emerald-400" />
+          <div className="flex-1 bg-neutral-900 rounded-2xl overflow-hidden relative border border-neutral-800 flex flex-col items-center justify-center">
+            <div className="text-center max-w-md">
+              <div className="mb-6">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mx-auto mb-4">
+                  <Video size={40} className="text-white" />
+                </div>
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">{session.title}</h2>
+              <p className="text-neutral-400 mb-4">{session.description || 'Instructor-led live session'}</p>
+              
+              {session.zoomMeetingId ? (
+                <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 mb-4">
+                  <p className="text-green-400 text-sm mb-3">✓ Zoom meeting is configured</p>
+                  <p className="text-neutral-300 text-xs mb-3">Meeting ID: {session.zoomMeetingId}</p>
+                  <a 
+                    href={`https://zoom.us/wc/join/${session.zoomMeetingId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition-colors text-sm"
+                  >
+                    Join on Zoom
+                  </a>
+                </div>
+              ) : (
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 mb-4">
+                  <p className="text-yellow-400 text-sm">⚠ Zoom integration pending</p>
+                  <p className="text-neutral-400 text-xs mt-2">The instructor will provide Zoom link when ready</p>
+                </div>
+              )}
+
+              <div className="text-left bg-neutral-800/50 rounded-lg p-3 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-neutral-400">Course:</span>
+                  <span className="text-white font-medium">{session.course.title}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-400">Instructor:</span>
+                  <span className="text-white font-medium">{session.course.instructor?.name || 'Instructor'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-400">Scheduled:</span>
+                  <span className="text-white font-medium">{new Date(session.startTime).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-400">Status:</span>
+                  <span className={`font-medium ${session.status === 'SCHEDULED' ? 'text-yellow-400' : session.status === 'LIVE' ? 'text-green-400' : 'text-neutral-400'}`}>
+                    {session.status}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
 

@@ -19,11 +19,16 @@ export default function LoginPage() {
       const res = await fetch('http://localhost:4000/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
       if (!res.ok) {
-        throw new Error('Invalid credentials');
+        let errMsg = 'Invalid credentials';
+        try {
+          const errData = await res.json();
+          if (errData.message) errMsg = Array.isArray(errData.message) ? errData.message[0] : errData.message;
+        } catch (e) {}
+        throw new Error(errMsg);
       }
 
       const data = await res.json();
