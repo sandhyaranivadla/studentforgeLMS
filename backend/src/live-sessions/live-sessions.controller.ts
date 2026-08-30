@@ -36,11 +36,11 @@ export class LiveSessionsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.INSTRUCTOR, Role.ADMIN)
-  @Post()
+  @Post('course/:courseId')
   createLiveSession(
     @Request() req: AuthRequest,
+    @Param('courseId') courseId: string,
     @Body() createLiveSessionDto: CreateLiveSessionDto,
-    @Query('courseId') courseId: string,
   ) {
     return this.liveSessionsService.createLiveSession(
       courseId,
@@ -50,8 +50,7 @@ export class LiveSessionsController {
     );
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.INSTRUCTOR, Role.ADMIN)
+  @UseGuards(JwtAuthGuard)
   @Get('course/:courseId')
   findAllByCourse(
     @Request() req: AuthRequest,
@@ -62,6 +61,13 @@ export class LiveSessionsController {
       req.user.id,
       req.user.role,
     );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Roles(Role.STUDENT)
+  @Get('my-sessions')
+  getMyUpcomingSessions(@Request() req: AuthRequest) {
+    return this.liveSessionsService.findUpcomingForStudent(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

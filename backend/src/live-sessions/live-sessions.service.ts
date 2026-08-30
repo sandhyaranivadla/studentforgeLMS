@@ -171,6 +171,84 @@ export class LiveSessionsService {
     });
   }
 
+  /* ── Student-specific queries ──────────────────────────────────── */
+
+  /**
+   * Get upcoming live sessions for a student
+   * Only returns sessions for courses the student is enrolled in
+   */
+  async findUpcomingForStudent(studentId: string) {
+    // Get all courses where student has ACTIVE enrollment
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: {
+        studentId,
+        status: 'ACTIVE',
+      },
+      select: { courseId: true },
+    });
+
+    const courseIds = enrollments.map((e) => e.courseId);
+
+    if (courseIds.length === 0) {
+      return [];
+    }
+
+    const now = new Date();
+
+    return this.prisma.liveSession.findMany({
+      where: {
+        courseId: { in: courseIds },
+        startTime: { gt: now },
+        status: LiveSessionStatus.SCHEDULED,
+      },
+      include: {
+        course: {
+          select: {
+            id: true,
+            title: true,
+            instructor: {
+              select: { name: true },
+            },
+          },
+        },
+        module: {
+          select: { id: true, title: true },
+        },
+      },
+      orderBy: { startTime: 'asc' },
+      take: 20,
+    });
+  }
+
+  /**
+   * Get sessions for a specific course that student is enrolled in
+   */
+  async findByCourseForStudent(studentId: string, courseId: string) {
+    // Verify student is enrolled in this course
+    const enrollment = await this.prisma.enrollment.findFirst({
+      where: {
+        studentId,
+        courseId,
+        status: 'ACTIVE',
+      },
+    });
+
+    if (!enrollment) {
+      throw new ForbiddenException(
+        'You are not enrolled in this course',
+      );
+    }
+
+    return this.prisma.liveSession.findMany({
+      where: { courseId },
+      include: {
+        course: true,
+        module: true,
+      },
+      orderBy: { startTime: 'asc' },
+    });
+  }
+
   async findOne(id: string, userId: string, userRole: Role) {
     const liveSession = await this.prisma.liveSession.findUnique({
       where: { id },

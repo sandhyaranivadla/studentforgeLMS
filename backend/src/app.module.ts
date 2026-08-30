@@ -14,6 +14,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { AdminModule } from './admin/admin.module';
 import { DiagnosticCheck } from './diagnostic-check';
 
 @Module({
@@ -31,6 +32,7 @@ import { DiagnosticCheck } from './diagnostic-check';
     AnnouncementsModule,
     CalendarModule,
     NotificationsModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService, DiagnosticCheck],
